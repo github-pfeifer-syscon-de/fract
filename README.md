@@ -16,3 +16,5 @@ The usual autotool procedure shoud work:
 </pre>
 
 All options are shown in a context menu with the right mouse button.
+
+To zoom just press the left mouse button and open a rectangle.
