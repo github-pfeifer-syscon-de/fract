@@ -28,15 +28,15 @@
 #include "FractWin.h"
 
 FractView::FractView(Gtk::Window &_parent, std::shared_ptr<Param> _param, Gtk::Application *appl)
-: m_param(_param)
+: m_param{_param}
 , m_Dispatcher()
 , m_Mutex()
-, m_selectedRect(nullptr)
-, m_parent(_parent)
-, m_appl(appl)
-, m_worker(nullptr)
-, m_proc(g_get_num_processors()) // uses number of cores, and stick to it, posix : sysconf(_SC_NPROCESSORS_ONLN) gtk is more portable (and gives the same answer)
-, m_row(0)
+, m_selectedRect{nullptr}
+, m_parent{_parent}
+, m_appl{appl}
+, m_worker{nullptr}
+, m_proc{g_get_num_processors()} // uses number of cores, and stick to it, posix : sysconf(_SC_NPROCESSORS_ONLN) gtk is more portable (and gives the same answer)
+, m_row{0}
 , m_lastParam()
 {
 
@@ -65,7 +65,7 @@ FractView::~FractView()
 bool
 FractView::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
 {
-	if (!pixmap) {
+	if (!m_pixmap) {
 		return true;
 	}
 	//cr-> = event->region;
@@ -77,7 +77,7 @@ FractView::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
 	cr->save();
 	cr->set_source_rgb(0.0, 0.0, 0.0);
 	cr->scale(1.0 / (double) m_param->getSamples(), 1.0 / (double) m_param->getSamples());
-	cr->set_source(pixmap, 0, 0);
+	cr->set_source(m_pixmap, 0, 0);
 	cr->paint();
 
 	if (m_selectedRect) {
@@ -300,7 +300,7 @@ FractView::save_png(Glib::ustring filename)
 		cr->set_antialias(Cairo::Antialias::ANTIALIAS_SUBPIXEL);
 		cr->set_source_rgb(0.0, 0.0, 0.0);
 		cr->scale(1.0 / (double) m_param->getSamples(), 1.0 / (double) m_param->getSamples());
-		cr->set_source(pixmap, 0, 0);
+		cr->set_source(m_pixmap, 0, 0);
 		cr->paint();
 	}
 	m_param->save(filename + ".txt");
@@ -327,7 +327,7 @@ FractView::get_param()
 Cairo::RefPtr<Cairo::ImageSurface>
 FractView::get_imagesurface()
 {
-	return pixmap;
+	return m_pixmap;
 }
 
 void
@@ -392,24 +392,24 @@ FractView::fill()
 
 	m_param->build_color_map();
 	set_size_request(m_param->getWidth(), m_param->getHeight());
-	if (!pixmap ||
-		pixmap->get_width() != (gint)m_param->getPixmapWidth() ||
-		pixmap->get_height() != (gint)m_param->getPixmapHeight()) {
-		pixmap = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32,
+	if (!m_pixmap ||
+		m_pixmap->get_width() != (gint)m_param->getPixmapWidth() ||
+		m_pixmap->get_height() != (gint)m_param->getPixmapHeight()) {
+		m_pixmap = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32,
 			m_param->getPixmapWidth(),
 			m_param->getPixmapHeight());
 
-		Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(pixmap);
+		Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_pixmap);
 		/* Erase pixmap */
 		cr->set_source_rgb(0.0, 0.0, 0.0);
-		cr->rectangle(0, 0, pixmap->get_width(), pixmap->get_height());
+		cr->rectangle(0, 0, m_pixmap->get_width(), m_pixmap->get_height());
 		cr->paint();
 	}
 
 	if (m_worker == nullptr) {
 		m_worker = new Worker<double>*[m_proc];
 	}
-	for (int i = 0; i < m_proc; ++i) {
+	for (guint32 i = 0; i < m_proc; ++i) {
 		m_worker[i] = nullptr;
 		switch (m_param->getFunction()) {
 		case 'M':
@@ -473,8 +473,8 @@ FractView::notifyRow(guint row)
 	//std::cout << "Added row " << row << " area " << redraw_start << " end " << redraw_end << "\n";
 
 	if (!m_redraw_pending) {
-		m_Dispatcher.emit(); // break out of thread box
 		m_redraw_pending = true; // as dispatching takes some time do no bother again
+		m_Dispatcher.emit(); // break out of thread box
 	}
 }
 
@@ -490,7 +490,7 @@ FractView::on_notification_from_worker_thread()
 		reinit_redraw();
 	}
 	//std::cout << "Draw area " << redraw_row << " " << redraw_height << "\n";
-	//pixmap->mark_dirty(0, redraw_row, width, redraw_height);
+	//m_pixmap->mark_dirty(0, redraw_row, m_param->getWidth(), redraw_height);
 
 	Gtk::Allocation allocation = get_allocation();
 	if (redraw_row + redraw_height == allocation.get_height()) {
@@ -505,7 +505,7 @@ void
 FractView::stop_workers(bool waitComplete)
 {
 	if (m_worker != nullptr) {
-		for (int i = 0; i < m_proc; ++i) {
+		for (guint32 i = 0; i < m_proc; ++i) {
 			Worker<double> *wrk = m_worker[i];
 			if (wrk != nullptr) {
 				//std::cout << "Stopping workers " << i << "." << std::endl;

@@ -39,7 +39,7 @@ public:
     void on_action_about();
 protected:
     std::shared_ptr<Param> m_param;
-    Cairo::RefPtr<Cairo::ImageSurface> pixmap;
+    Cairo::RefPtr<Cairo::ImageSurface> m_pixmap;
 private:
     Glib::Dispatcher m_Dispatcher; // used for redraw notification
     mutable std::mutex m_Mutex; // serialize redraw area building and drawing
@@ -47,7 +47,7 @@ private:
     Gtk::Window &m_parent;
     Gtk::Application *m_appl;
     Worker<double> **m_worker;
-    int m_proc; // cores or processors
+    guint32 m_proc; // cores or processors
     std::atomic<unsigned int> m_row; // atomic is expected to be faster than a mutex
     guint32 m_redraw_start;
     guint32 m_redraw_end;
