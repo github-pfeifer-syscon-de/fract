@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkAboutDialog" id="abt-dlg">
+    <property name="can_focus">False</property>
+    <property name="type_hint">dialog</property>
+    <property name="program_name">Fract</property>
+    <property name="copyright" translatable="yes">R. Pfeifer 2018 </property>
+    <property name="comments" translatable="yes">Create fractale images of the mandelbrot-, julia- or newton-set, with intuitive interactive steps. 
+With the option to improve the quality of created images by antialiasing.</property>
+    <property name="authors">R. Pfeifer </property>
+    <property name="artists">Thanks for the great Gtk-toolkit and its Gtkmm wrapper, and the helpful communites at stackoverflow just to name one.</property>
+    <property name="logo_icon_name">image</property>
+    <property name="license_type">gpl-3-0</property>
+    <child>
+      <placeholder/>
+    </child>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

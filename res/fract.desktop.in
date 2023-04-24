@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Version=0.1
+Name=Fract
+Comment=Fractale generator
+Categories=Application;Graphics;
+Exec=fract
+Icon=@APP_ICON@
