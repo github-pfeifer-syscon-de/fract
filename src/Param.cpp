@@ -363,7 +363,7 @@ Param::open(std::string filename)
 
 	try {
 		stat.open(filename, std::ios::in);
-		bool imend = FALSE;
+		bool imend = false;
 		while (!stat.eof() &&
 			stat.peek() >= 0) {
 			std::string line;

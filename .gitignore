@@ -61,3 +61,5 @@
 /compile
 /config.guess
 /nbproject/
+/src/configure.ac
+/pkg/

@@ -24,9 +24,18 @@
 
 template<class T>
 Worker<T>::Worker(FractView* _caller)
-: m_active(TRUE)
+: m_caller{_caller}
 {
-	this->m_caller = _caller;
+    m_image = new unsigned int[_caller->get_param()->getPixmapWidth()];
+}
+
+template<class T>
+Worker<T>::~Worker()
+{
+	m_active = false;
+    if (m_image) {
+        delete [] m_image;
+    }
 }
 
 template<class T> void
@@ -53,40 +62,32 @@ Worker<T>::do_work()
 		if (row >= param->getPixmapHeight())
 			break;
 
-		auto pixmap = m_caller->get_imagesurface();
-		if (!pixmap) {
-			break;
-		}
-		guint stride = pixmap->get_stride() / sizeof(guint32); // related to image format ARGB32 index byte to guint32 as we use a pointer of that type
-		guint32 *img = (guint32 *) pixmap->get_data();
-		if (img == NULL)
-			break;
 		T im = param->getImStart() + im_step * (T) (row);
 		T re = param->getReStart();
 		for (guint x = 0; x < param->getPixmapWidth(); ++x) {
 			std::complex<T> p(re, im);
 			guint n = compute(p);
-			int i = (row * stride + x); // related to image format ARGB32, matches pointer guint32
+			//int i = (row * stride + x); // related to image format ARGB32, matches pointer guint32
 			// Color mapping test
 			//n = (x * row * caller->depth ) / (caller->width * caller->height);
 			// This might be the fastest way to color some pixels
 			guint32 rgb = param->map_rgb(n, re, im);
 			if (m_active)
-				img[i] = rgb; // no need to convert endianess, as ARGB32 uses always plattform scheme, says the doc
+				m_image[x] = rgb; // no need to convert endianess, as ARGB32 uses always plattform scheme, says the doc
 			else
 				break;
 			re += re_step;
 		}
-
 		if (m_active)
-			m_caller->notifyRow(row); // and update display because that is this all about (and for a nice effect do it incrementally)
+			m_caller->notifyRow(row, m_image); // and update display because that is this all about (and for a nice effect do it incrementally)
 	}
+    m_active = false;
 }
 
-template<class T>
-Worker<T>::~Worker()
+template<class T> unsigned int*
+Worker<T>::get_image()
 {
-	m_active = FALSE;
+    return m_image;
 }
 
 template<class T> guint
@@ -209,13 +210,13 @@ NewtonWorker<T>::compute(std::complex<T> x)
 
 // double and long double implementations
 template class Worker<double>;
-template class Worker<long double>;
+//template class Worker<long double>;
 
 template class JuliaWorker<double>;
-template class JuliaWorker<long double>;
+//template class JuliaWorker<long double>;
 
 template class MandelWorker<double>;
-template class MandelWorker<long double>;
+//template class MandelWorker<long double>;
 
 template class NewtonWorker<double>;
-template class NewtonWorker<long double>;
+//template class NewtonWorker<long double>;

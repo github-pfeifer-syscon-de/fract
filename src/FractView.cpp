@@ -364,7 +364,7 @@ FractView::on_menu_julia()
 	sparam->setReEnd(2.0);
 	sparam->setImStart(-1.5);
 	sparam->setImEnd(1.5);
-	sparam->setPrimaryWindow(FALSE); // to keep the effort for memory management to a reasonable amount don't allow creating sub, sub windows
+	sparam->setPrimaryWindow(false); // to keep the effort for memory management to a reasonable amount don't allow creating sub, sub windows
 
 	FractWin *fract_window = new FractWin(sparam, m_appl);
 	//m_ChildFract.push_back(fract_window);
@@ -458,13 +458,19 @@ FractView::reinit_redraw()
 {
 	m_redraw_start = m_param->getHeight();
 	m_redraw_end = 0;
-	m_redraw_pending = FALSE;
+	m_redraw_pending = false;
 }
 
 void
-FractView::notifyRow(guint row)
+FractView::notifyRow(guint row, unsigned int *image)
 {
 	std::lock_guard<std::mutex> lock(m_Mutex);
+    // try to modify in a locked context
+	guint stride = m_pixmap->get_stride(); // related to image format ARGB32 index byte to guint32 as we use a pointer of that type
+	auto img = m_pixmap->get_data();
+	int i = (row * stride); // related to image format ARGB32, matches pointer guint32
+    m_pixmap->mark_dirty(0, row, m_param->getWidth(), row+1);
+    memcpy(&img[i], image, m_pixmap->get_stride());
 	guint srow = row / m_param->getSamples();
 	if (m_redraw_start > srow)
 		m_redraw_start = srow;
@@ -509,7 +515,7 @@ FractView::stop_workers(bool waitComplete)
 			Worker<double> *wrk = m_worker[i];
 			if (wrk != nullptr) {
 				//std::cout << "Stopping workers " << i << "." << std::endl;
-				wrk->setActive(FALSE); // for an early exit prevent updating a vanished pixmap
+				wrk->setActive(false); // for an early exit prevent updating a vanished pixmap
 				if (waitComplete) {
 					int n = 0;
 					while (m_worker[i] != nullptr

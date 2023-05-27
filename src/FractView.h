@@ -35,7 +35,7 @@ public:
     guint32 get_row();
     Cairo::RefPtr<Cairo::ImageSurface> get_imagesurface();
     std::shared_ptr<Param> get_param();
-    void notifyRow(guint row);
+    void notifyRow(guint row, unsigned int *image);
     void on_action_about();
 protected:
     std::shared_ptr<Param> m_param;
