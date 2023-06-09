@@ -12,11 +12,16 @@ dnl so if you happen to find yourself in the need to use
 dnl a older compiler, c++17 should work as well.
 AX_CXX_COMPILE_STDCXX([20], [noext], [optional])
 LT_INIT
+AC_CANONICAL_HOST
+AC_MSG_NOTICE([host_os $host_os])
 PKG_CHECK_MODULES([GTKMM], [gtkmm-3.0])
 PKG_CHECK_MODULES([GLIBMM], [glibmm-2.4 giomm-2.4])
 PKG_CHECK_MODULES([GTHREAD], [gthread-2.0])
 AM_CONDITIONAL([RELEASE],[test "x${enable_debug}" != "xyes"])
 AX_CHECK_SED()
+if test "$host_os" = "mingw32" ; then
+    AC_SUBST(EXTRA_LDFLAGS, "-mwindows")
+fi
 AC_CONFIG_FILES([
 Makefile
 res/Makefile
