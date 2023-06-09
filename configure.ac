@@ -1,8 +1,13 @@
 AC_INIT([Fract Program], [0.1], [fract@pfeifer-syscon.de])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([1.11])
+dnl use -no-portablitity to stop complaining about $(shell... in res Makefile.am
+dnl i dont get it, as the shell is everywhere, turtle power!
+
+AM_INIT_AUTOMAKE([1.11 -Wno-portability])
+
 AM_SILENT_RULES([yes])
+
 AX_CHECK_ENABLE_DEBUG([info], [DEBUG], [RELEASE], [IS-RELEASE])
 AC_PROG_CXX
 AC_PROG_CC
