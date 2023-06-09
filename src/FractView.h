@@ -42,7 +42,8 @@ protected:
     Cairo::RefPtr<Cairo::ImageSurface> m_pixmap;
 private:
     Glib::Dispatcher m_Dispatcher; // used for redraw notification
-    mutable std::mutex m_Mutex; // serialize redraw area building and drawing
+    mutable std::mutex m_notifyMutex; // serialize collecting redraw area
+    mutable std::mutex m_redrawMutex; // serialize image surface update/using
     Cairo::RectangleInt *m_selectedRect;
     Gtk::Window &m_parent;
     Gtk::Application *m_appl;

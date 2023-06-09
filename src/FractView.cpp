@@ -30,7 +30,8 @@
 FractView::FractView(Gtk::Window &_parent, std::shared_ptr<Param> _param, Gtk::Application *appl)
 : m_param{_param}
 , m_Dispatcher()
-, m_Mutex()
+, m_notifyMutex()
+, m_redrawMutex()
 , m_selectedRect{nullptr}
 , m_parent{_parent}
 , m_appl{appl}
@@ -70,24 +71,28 @@ FractView::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
 	}
 	//cr-> = event->region;
 	//Gtk::Allocation allocation = get_allocation();
+    {
+        // as we had some issues when filling imageSurface asynchronously
+        // use a lock to serialize update/drawing
+        std::lock_guard<std::mutex> lock(m_redrawMutex);
+        //cr->rectangle(allocation.get_x(), allocation.get_y(),
+        //    allocation.get_width(), allocation.get_height());
+        cr->set_antialias(Cairo::Antialias::ANTIALIAS_SUBPIXEL);
+        cr->save();
+        cr->set_source_rgb(0.0, 0.0, 0.0);
+        cr->scale(1.0 / (double) m_param->getSamples(), 1.0 / (double) m_param->getSamples());
+        cr->set_source(m_pixmap, 0, 0);
+        cr->paint();
+    }
 
-	//cr->rectangle(allocation.get_x(), allocation.get_y(),
-	//    allocation.get_width(), allocation.get_height());
-	cr->set_antialias(Cairo::Antialias::ANTIALIAS_SUBPIXEL);
-	cr->save();
-	cr->set_source_rgb(0.0, 0.0, 0.0);
-	cr->scale(1.0 / (double) m_param->getSamples(), 1.0 / (double) m_param->getSamples());
-	cr->set_source(m_pixmap, 0, 0);
-	cr->paint();
-
-	if (m_selectedRect) {
-		cr->restore();
-		cr->set_line_width(1.0);
-		cr->set_source_rgb(1.0, 1.0, 1.0);
-		cr->rectangle(m_selectedRect->x, m_selectedRect->y,
-			m_selectedRect->width, m_selectedRect->height);
-		cr->stroke();
-	}
+    if (m_selectedRect) {
+        cr->restore();
+        cr->set_line_width(1.0);
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        cr->rectangle(m_selectedRect->x, m_selectedRect->y,
+            m_selectedRect->width, m_selectedRect->height);
+        cr->stroke();
+    }
 	//std::cout << "End paint\n";
 	return true;
 }
@@ -464,13 +469,16 @@ FractView::reinit_redraw()
 void
 FractView::notifyRow(guint row, unsigned int *image)
 {
-	std::lock_guard<std::mutex> lock(m_Mutex);
+	std::lock_guard<std::mutex> lock(m_notifyMutex);
     // try to modify in a locked context
 	guint stride = m_pixmap->get_stride(); // related to image format ARGB32 index byte to guint32 as we use a pointer of that type
 	auto img = m_pixmap->get_data();
 	int i = (row * stride); // related to image format ARGB32, matches pointer guint32
-    m_pixmap->mark_dirty(0, row, m_param->getWidth(), row+1);
-    memcpy(&img[i], image, m_pixmap->get_stride());
+    {
+        std::lock_guard<std::mutex> lock(m_redrawMutex);
+        m_pixmap->mark_dirty(0, row, m_param->getWidth(), 1);
+        memcpy(&img[i], image, m_pixmap->get_stride());
+    }
 	guint srow = row / m_param->getSamples();
 	if (m_redraw_start > srow)
 		m_redraw_start = srow;
@@ -490,7 +498,7 @@ FractView::on_notification_from_worker_thread()
 	gint32 redraw_row;
 	gint32 redraw_height;
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex); // block concurrent updates
+		std::lock_guard<std::mutex> lock(m_notifyMutex); // block concurrent updates
 		redraw_row = m_redraw_start; // just for a short moment to read the area
 		redraw_height = m_redraw_end - m_redraw_start + 1;
 		reinit_redraw();
