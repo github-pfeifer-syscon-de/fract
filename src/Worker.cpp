@@ -26,16 +26,13 @@ template<class T>
 Worker<T>::Worker(FractView* _caller)
 : m_caller{_caller}
 {
-    m_image = new unsigned int[_caller->get_param()->getPixmapWidth()];
+    m_image = std::make_unique<uint32_t[]>(_caller->get_param()->getPixmapWidth());
 }
 
 template<class T>
 Worker<T>::~Worker()
 {
 	m_active = false;
-    if (m_image) {
-        delete [] m_image;
-    }
 }
 
 template<class T> void
@@ -78,17 +75,12 @@ Worker<T>::do_work()
 				break;
 			re += re_step;
 		}
-		if (m_active)
-			m_caller->notifyRow(row, m_image); // and update display because that is this all about (and for a nice effect do it incrementally)
+		if (m_active)                                // let raw ptr escape as it just used for this call
+			m_caller->notifyRow(row, m_image.get()); // and update display because that is this all about (and for a nice effect do it incrementally)
 	}
     m_active = false;
 }
 
-template<class T> unsigned int*
-Worker<T>::get_image()
-{
-    return m_image;
-}
 
 template<class T> guint
 Worker<T>::compute(std::complex<T> x)

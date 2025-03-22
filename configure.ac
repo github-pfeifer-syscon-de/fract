@@ -14,7 +14,7 @@ AC_PROG_CC
 dnl we depend on c++20 in just one place (glglobe),
 dnl (did choose it for consistency across libs and programs)
 dnl so if you happen to find yourself in the need to use
-dnl a older compiler, c++17 should work as well.
+dnl a older compiler, c++17 may work as well.
 AX_CXX_COMPILE_STDCXX([20], [noext], [optional])
 LT_INIT
 AC_CANONICAL_HOST

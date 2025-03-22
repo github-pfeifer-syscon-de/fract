@@ -35,12 +35,11 @@ public:
     virtual guint compute(std::complex<T> p);
     virtual void prepare(std::complex<T> &x, std::complex<T> &q) = 0;
     std::shared_ptr<Param> getParam();
-    unsigned int* get_image();
     void setActive(bool active);
 protected:
     FractView* m_caller;
     bool m_active{true};
-    unsigned int* m_image;
+    std::unique_ptr<uint32_t[]> m_image;
 private:
 };
 

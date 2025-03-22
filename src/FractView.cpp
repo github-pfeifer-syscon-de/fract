@@ -182,7 +182,7 @@ FractView::on_button_press_event(GdkEventButton* event)
 	//std::cout << "press btn " << event->button << endl;
 	//          << " state " <<  event->state
 	//          << " type " << event->type << "\n";
-	if (event->button == 1) {
+	if (event->button == GDK_BUTTON_PRIMARY) {
 		if (m_selectedRect == nullptr) {
 			m_selectedRect = new(Cairo::RectangleInt);
 			m_selectedRect->x = event->x;
@@ -199,7 +199,7 @@ FractView::on_button_press_event(GdkEventButton* event)
 
 		return true; // It has been handled.
 	}
-	else if (event->button == 3) {
+	else if (event->button == GDK_BUTTON_SECONDARY) {
 		if (m_param->isPrimaryWindow()) {
 			// Dont change julia points as we dont allow sub, sub windows see below and want to keep actual view
 			m_param->setReJulia(m_param->getReStart() + m_param->getReStep() * event->x);
@@ -467,17 +467,17 @@ FractView::reinit_redraw()
 }
 
 void
-FractView::notifyRow(guint row, unsigned int *image)
+FractView::notifyRow(guint row, uint32_t *image)
 {
 	std::lock_guard<std::mutex> lock(m_notifyMutex);
     // try to modify in a locked context
-	guint stride = m_pixmap->get_stride(); // related to image format ARGB32 index byte to guint32 as we use a pointer of that type
-	auto img = m_pixmap->get_data();
-	int i = (row * stride); // related to image format ARGB32, matches pointer guint32
+	auto img = reinterpret_cast<uint32_t*>(m_pixmap->get_data());
+    uint32_t wordStride = m_pixmap->get_stride() / sizeof(int32_t);
+	int i = (row * wordStride); // related to image format ARGB32, matches pointer guint32
     {
         std::lock_guard<std::mutex> lock(m_redrawMutex);
         m_pixmap->mark_dirty(0, row, m_param->getWidth(), 1);
-        memcpy(&img[i], image, m_pixmap->get_stride());
+        std::copy_n(image, wordStride, &img[i]);
     }
 	guint srow = row / m_param->getSamples();
 	if (m_redraw_start > srow)
