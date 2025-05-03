@@ -6,4 +6,4 @@ Name=Fract
 Comment=Fractale generator
 Categories=Application;Graphics;
 Exec=fract
-Icon=/usr/share/icons/hicolor/64x64/apps/fract.png
+Icon=fract
