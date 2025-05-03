@@ -3,26 +3,22 @@ GLIB_COMPILE_RESOURCES = $(shell $(PKGCONFIG) --variable=glib_compile_resources 
 
 FRACT_RESOURCE_XML=fract.gresources.xml
 FRACT_RESOURCES=$(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=. --generate-dependencies $(FRACT_RESOURCE_XML))
+RESOURCE_C=../src/resources.c
 
-all:../src/resources.c
+all:$(RESOURCE_C)
 
-../src/resources.c: $(FRACT_RESOURCE_XML) $(FRACT_RESOURCES) 
+$(RESOURCE_C): $(FRACT_RESOURCE_XML) $(FRACT_RESOURCES)
 	$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(dir $<) --generate-source $<
 
 # The desktop files
 desktopdir = $(datadir)/applications
-desktop_in_files=fract.desktop.in
-desktop_DATA=$(desktop_in_files:.desktop.in=.desktop)
+desktop_DATA=fract.desktop
 
-# application icon
-appicondir = $(datadir)/icons/hicolor/64x64/apps
-appicon_DATA = fract.png
-appdir_icon=$(appicondir)/$(appicon_DATA)
+# application icon, using only png, as there is no meaningful svg representation
+appicondir=$(datadir)/icons/hicolor/64x64/apps
+appicon_DATA=fract.png
 
 clean-local:
-	-rm -rf $(desktop_DATA)
-	
-EXTRA_DIST = $(FRACT_RESOURCES) $(FRACT_RESOURCE_XML) $(desktop_in_files) $(appicon_DATA)
+	-rm -rf $(RESOURCE_C)
 
-%.desktop: %.desktop.in
-	@regex_cmd@ -e "s,\@APP_ICON\@,$(appdir_icon),g" $? > $@
+EXTRA_DIST = $(FRACT_RESOURCES) $(FRACT_RESOURCE_XML) $(desktop_DATA) $(appicon_DATA)
