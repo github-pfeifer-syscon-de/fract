@@ -24,7 +24,7 @@
 
 FractWin::FractWin(std::shared_ptr<Param> param, Gtk::Application *appl)
 : Gtk::ApplicationWindow()
-, m_fractView(nullptr)
+, m_fractView{}
 {
 
 	set_default_size(param->getWidth(), param->getHeight());

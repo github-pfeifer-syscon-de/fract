@@ -27,7 +27,7 @@ public:
     void on_activate() override;
     void on_startup() override;
 private:
-    FractWin m_fractAppWindow;
+    FractWin* m_fractAppWindow;
 
     void on_action_quit();
 };

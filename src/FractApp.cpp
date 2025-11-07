@@ -23,7 +23,7 @@
 
 FractApp::FractApp(int argc, char **argv)
 : Gtk::Application(argc, argv, "de.pfeifer_syscon.fract")
-, m_fractAppWindow(std::make_shared<Param>(), this)
+, m_fractAppWindow{}
 {
 }
 
@@ -34,14 +34,15 @@ FractApp::~FractApp()
 void
 FractApp::on_activate()
 {
-	add_window(m_fractAppWindow);
-	m_fractAppWindow.present();
+    m_fractAppWindow = new FractWin(std::make_shared<Param>(), this);
+	add_window(*m_fractAppWindow);
+	m_fractAppWindow->present();
 }
 
 void
 FractApp::on_action_quit()
 {
-	m_fractAppWindow.hide();
+	m_fractAppWindow->hide();
 
 	// Not really necessary, when Gtk::Widget::hide() is called, unless
 	// Gio::Application::hold() has been called without a corresponding call
