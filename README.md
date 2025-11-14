@@ -6,12 +6,12 @@ And a improved rendering with antialiasing.
 
 ![fract](fract.png "fract")
 
-The usual autotool procedure should work:
+The usual autotool procedure should work (but optimisation is recommended):
 
 <pre>
    autoreconf -fis
    ./configure --prefix=/usr
-   make
+   make CXXFLAGS="-mtune=native -march=native -O3"
    ./src/fract
 </pre>
 
