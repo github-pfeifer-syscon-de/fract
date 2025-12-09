@@ -29,7 +29,7 @@ class Param {
 public:
     Param();
     Param(const Param& orig);
-    virtual ~Param();
+    virtual ~Param() = default;
 
     void setDepth(guint depth);
     guint getDepth();
@@ -83,7 +83,7 @@ private:
     long double m_im_end;
     long double m_re_julia;
     long double m_im_julia;
-    guint32 *m_color_map;
+    std::vector<guint32> m_color_map;
     bool m_primaryWindow;
     std::vector<Gdk::Color> m_colors;
     enum COLORING m_coloring;

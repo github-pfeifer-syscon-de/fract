@@ -47,7 +47,6 @@ Param::Param()
 , m_im_end(1.25)
 , m_re_julia(0.23543446355295022)
 , m_im_julia(-0.5198893148651992)
-, m_color_map(nullptr)
 , m_primaryWindow(true)
 , m_colors()
 , m_coloring(STRECH)
@@ -72,20 +71,12 @@ Param::Param(const Param& orig)
 , m_im_end(orig.m_im_end)
 , m_re_julia(orig.m_re_julia)
 , m_im_julia(orig.m_im_julia)
-, m_color_map(nullptr) // as this can easily be recreated and we dont want to share the pointer (freeing it two times is not so an good idea)
 , m_primaryWindow(orig.m_primaryWindow)
 , m_colors(orig.m_colors)
 , m_coloring(orig.m_coloring)
 {
 }
 
-Param::~Param()
-{
-	//std::cout << "destructor param" << std::endl;
-	if (m_color_map)
-		g_free(m_color_map);
-
-}
 
 void
 Param::setDepth(guint depth)
@@ -265,10 +256,7 @@ Param::update(Cairo::RectangleInt saveRect)
 void
 Param::build_color_map()
 {
-	if (m_color_map)
-		g_free(m_color_map);
-
-	m_color_map = g_new0(guint32, m_depth);
+	m_color_map.resize(m_depth);
 	double depth_step = (double) m_depth / (double) m_colors.size();
 	for (guint32 d = 0; d < m_depth; ++d) {
 		if (m_coloring == STRECH) {

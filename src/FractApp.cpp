@@ -27,10 +27,6 @@ FractApp::FractApp(int argc, char **argv)
 {
 }
 
-FractApp::~FractApp()
-{
-}
-
 void
 FractApp::on_activate()
 {

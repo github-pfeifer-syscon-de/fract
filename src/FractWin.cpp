@@ -39,10 +39,6 @@ FractWin::FractWin(std::shared_ptr<Param> param, Gtk::Application *appl)
 	show_all_children();
 }
 
-FractWin::~FractWin()
-{
-}
-
 void
 FractWin::on_hide()
 {

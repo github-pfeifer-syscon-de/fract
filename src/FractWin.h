@@ -26,7 +26,7 @@
 class FractWin : public Gtk::ApplicationWindow {
 public:
     FractWin(std::shared_ptr<Param> param, Gtk::Application *appl);
-    virtual ~FractWin();
+    virtual ~FractWin() = default;
     FractView *getFractView();
 private:
     FractView *m_fractView;

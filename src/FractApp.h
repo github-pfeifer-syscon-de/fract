@@ -22,7 +22,7 @@
 class FractApp : public Gtk::Application {
 public:
     FractApp(int arc, char **argv);
-    virtual ~FractApp();
+    virtual ~FractApp() = default;
 
     void on_activate() override;
     void on_startup() override;

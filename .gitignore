@@ -63,3 +63,4 @@
 /src/configure.ac
 /pkg/
 /src/.deps/
+/compile_commands.json
