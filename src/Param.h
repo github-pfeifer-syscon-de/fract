@@ -26,9 +26,9 @@ enum class Coloring {
 };
 
 enum class Function : gchar {
-    Mandelbrot = 'M',
-    Juliaset = 'J',
-    Newton = 'N'
+      Mandelbrot = 'M'
+    , Juliaset = 'J'
+    , Newton = 'N'
 };
 
 class Param {
