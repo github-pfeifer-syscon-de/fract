@@ -27,6 +27,10 @@ public:
     virtual ~ParamDlg();
 
     void refresh(std::shared_ptr<Param> param);
+    
+    static constexpr auto TEXT_MANDELBROT{"Mandelbrot"};
+    static constexpr auto TEXT_JULIASET{"Juliaset"};
+    static constexpr auto TEXT_NEWTON{"Newton"};
 protected:
 private:
     Gtk::ComboBoxText m_Samples;
@@ -35,5 +39,4 @@ private:
     Gtk::SpinButton m_Width;
     Gtk::SpinButton m_Height;
     std::vector<Gtk::ColorButton *> m_color_cbs;
-    Glib::ustring code2name(char code);
 };

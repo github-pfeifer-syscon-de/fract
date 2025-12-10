@@ -17,7 +17,6 @@
 
 #include <gtkmm.h>
 #include <iostream>
-#include <exception>
 
 #include "FractApp.h"
 
@@ -31,58 +30,58 @@ void
 FractApp::on_activate()
 {
     m_fractAppWindow = new FractWin(std::make_shared<Param>(), this);
-	add_window(*m_fractAppWindow);
-	m_fractAppWindow->present();
+    add_window(*m_fractAppWindow);
+    m_fractAppWindow->present();
 }
 
 void
 FractApp::on_action_quit()
 {
-	m_fractAppWindow->hide();
+    m_fractAppWindow->hide();
 
-	// Not really necessary, when Gtk::Widget::hide() is called, unless
-	// Gio::Application::hold() has been called without a corresponding call
-	// to Gio::Application::release().
-	quit();
+    // Not really necessary, when Gtk::Widget::hide() is called, unless
+    // Gio::Application::hold() has been called without a corresponding call
+    // to Gio::Application::release().
+    quit();
 }
 
 void
 FractApp::on_startup()
 {
-	// Call the base class's implementation.
-	Gtk::Application::on_startup();
+    // Call the base class's implementation.
+    Gtk::Application::on_startup();
 
-	// Add actions and keyboard accelerators for the application menu.
-	//add_action("preferences", sigc::mem_fun(m_monglAppWindow, &MonglAppWindow::on_action_preferences));
-	//add_action("about", sigc::mem_fun(m_monglAppWindow, &MonglAppWindow::on_action_about));
-	//add_action("quit", sigc::mem_fun(*this, &MonglApp::on_action_quit));
-	//set_accel_for_action("app.quit", "<Ctrl>Q");
+    // Add actions and keyboard accelerators for the application menu.
+    //add_action("preferences", sigc::mem_fun(m_monglAppWindow, &MonglAppWindow::on_action_preferences));
+    //add_action("about", sigc::mem_fun(m_monglAppWindow, &MonglAppWindow::on_action_about));
+    //add_action("quit", sigc::mem_fun(*this, &MonglApp::on_action_quit));
+    //set_accel_for_action("app.quit", "<Ctrl>Q");
 
-	//auto refBuilder = Gtk::Builder::create();
-	//try {
-	// /de/pfeifer_syscon/monglapp
-	//	auto path = get_resource_base_path();
-	//    refBuilder->add_from_resource(path + "/app-menu.ui");
-	//    auto object = refBuilder->get_object("appmenu");
-	//    auto app_menu = Glib::RefPtr<Gio::MenuModel>::cast_dynamic(object);
-	//    if (app_menu)
-	//        set_app_menu(app_menu);
-	//    else
-	//        std::cerr << "MonglApp::on_startup(): No \"appmenu\" object in app_menu.ui"
-	//            << std::endl;
-	//} catch (const Glib::Error& ex) {
-	//    std::cerr << "MonglApp::on_startup(): " << ex.what() << std::endl;
-	//    return;
-	//}
+    //auto refBuilder = Gtk::Builder::create();
+    //try {
+    // /de/pfeifer_syscon/monglapp
+    //    auto path = get_resource_base_path();
+    //    refBuilder->add_from_resource(path + "/app-menu.ui");
+    //    auto object = refBuilder->get_object("appmenu");
+    //    auto app_menu = Glib::RefPtr<Gio::MenuModel>::cast_dynamic(object);
+    //    if (app_menu)
+    //        set_app_menu(app_menu);
+    //    else
+    //        std::cerr << "MonglApp::on_startup(): No \"appmenu\" object in app_menu.ui"
+    //            << std::endl;
+    //} catch (const Glib::Error& ex) {
+    //    std::cerr << "MonglApp::on_startup(): " << ex.what() << std::endl;
+    //    return;
+    //}
 }
 
 int
 main(int argc, char** argv)
 {
-	//printf("DISPLAY=%s\n", getenv("DISPLAY"));
-	//setenv("DISPLAY", ":0", 1);    // Debug on remote display
+    //printf("DISPLAY=%s\n", getenv("DISPLAY"));
+    //setenv("DISPLAY", ":0", 1);    // Debug on remote display
 
-	FractApp app(argc, argv);
+    FractApp app(argc, argv);
 
-	return app.run();
+    return app.run();
 }

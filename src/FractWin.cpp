@@ -27,30 +27,30 @@ FractWin::FractWin(std::shared_ptr<Param> param, Gtk::Application *appl)
 , m_fractView{}
 {
 
-	set_default_size(param->getWidth(), param->getHeight());
-	auto scrWin = Gtk::make_managed<Gtk::ScrolledWindow>();
-	m_fractView = Gtk::make_managed<FractView>(*this, param, appl);
-	Glib::RefPtr<Gdk::Pixbuf> pix = Gdk::Pixbuf::create_from_resource(appl->get_resource_base_path() + "/fract.png");
-	set_icon(pix);
+    set_default_size(param->getWidth(), param->getHeight());
+    auto scrWin = Gtk::make_managed<Gtk::ScrolledWindow>();
+    m_fractView = Gtk::make_managed<FractView>(*this, param, appl);
+    Glib::RefPtr<Gdk::Pixbuf> pix = Gdk::Pixbuf::create_from_resource(appl->get_resource_base_path() + "/fract.png");
+    set_icon(pix);
 
-	scrWin->add(*m_fractView);
-	add(*scrWin);
+    scrWin->add(*m_fractView);
+    add(*scrWin);
 
-	show_all_children();
+    show_all_children();
 }
 
 void
 FractWin::on_hide()
 {
-	Gtk::Window::on_hide();
-	// stop still running worker, as it will crash
-	//   otherwise on accessing a destoryed pixmap
-	if (m_fractView != nullptr)
-		m_fractView->stop_workers(false);
+    Gtk::Window::on_hide();
+    // stop still running worker, as it will crash
+    //   otherwise on accessing a destoryed pixmap
+    if (m_fractView != nullptr)
+        m_fractView->stop_workers(false);
 }
 
 FractView *
 FractWin::getFractView()
 {
-	return m_fractView;
+    return m_fractView;
 }

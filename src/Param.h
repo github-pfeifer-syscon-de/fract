@@ -20,9 +20,15 @@
 #include <gtkmm.h>
 #include <vector>
 
-enum COLORING {
-    STRECH,
-    REPEAT
+enum class Coloring {
+    Strech,
+    Repeat
+};
+
+enum class Function : gchar {
+    Mandelbrot = 'M',
+    Juliaset = 'J',
+    Newton = 'N'
 };
 
 class Param {
@@ -33,8 +39,8 @@ public:
 
     void setDepth(guint depth);
     guint getDepth();
-    void setFunction(gchar function);
-    gchar getFunction();
+    void setFunction(enum Function function);
+    enum Function getFunction();
     void setWidth(guint width);
     guint getWidth();
     void setHeight(guint height);
@@ -69,10 +75,25 @@ public:
     void set_color(gint32 pos, Gdk::Color color);
     Gdk::Color get_color(gint32 pos) const;
     gint32 get_color_count() const;
-    void setColoring(enum COLORING coloring);
-    enum COLORING getColoring() const;
+    void setColoring(enum Coloring coloring);
+    enum Coloring getColoring() const;
+    
+    static constexpr auto RE_START{"reStart: "};
+    static constexpr auto RE_END{"reEnd: "};
+    static constexpr auto IM_START{"imStart: "};
+    static constexpr auto IM_END{"imEnd: "};
+    static constexpr auto DEPTH{"depth: "};
+    static constexpr auto FUNCTION{"function: "};
+    static constexpr auto WIDTH{"width: "};
+    static constexpr auto HEIGHT{"height: "};
+    static constexpr auto SAMPLES{"samples: "};
+    static constexpr auto COLORING{"coloring: "};
+    static constexpr auto RE_JULIA{"reJulia: "};
+    static constexpr auto IM_JULIA{"imJulia: "};    
+    
+    static enum Function char2Function(gchar function);
 private:
-    gchar m_function;
+    enum Function m_function;
     guint32 m_samples; // Multisampling used on x&y so 4 will result in 16 samples per display pixel
     guint m_width;
     guint m_height;
@@ -86,7 +107,7 @@ private:
     std::vector<guint32> m_color_map;
     bool m_primaryWindow;
     std::vector<Gdk::Color> m_colors;
-    enum COLORING m_coloring;
+    enum Coloring m_coloring;
 
     guint32 map(gint32 d, double depth_step);
 };
