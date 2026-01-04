@@ -1,9 +1,9 @@
 PKGCONFIG = pkgconf
 GLIB_COMPILE_RESOURCES = $(shell $(PKGCONFIG) --variable=glib_compile_resources gio-2.0)
 
-FRACT_RESOURCE_XML=fract.gresources.xml
-FRACT_RESOURCES=$(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=. --generate-dependencies $(FRACT_RESOURCE_XML))
-RESOURCE_C=../src/resources.c
+FRACT_RESOURCE_XML=$(srcdir)/fract.gresources.xml
+FRACT_RESOURCES=$(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(FRACT_RESOURCE_XML))
+RESOURCE_C=$(top_srcdir)/src/resources.c
 
 all:$(RESOURCE_C)
 
