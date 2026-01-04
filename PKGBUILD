@@ -1,6 +1,6 @@
 # Maintainer: Rpf <rpf@pfeifer-syscon.de>
 pkgname=fract
-pkgver=r42.b45137a
+pkgver=r15.f9b0e25
 pkgrel=1
 pkgdesc="Calculate fractales"
 arch=("x86_64")
@@ -20,25 +20,25 @@ pkgver() {
 }
 
 prepare() {
-    cd ${srcdir}/..
+    cd "${srcdir}/../build"
 #    autoreconf -fis
 }
 
 check() {
-    cd "${srcdir}/.."
+    cd "${srcdir}/../build"
     make -k check
 }
 
 
 build() {
-    cd "${srcdir}/.."
+    cd "${srcdir}/../build"
     # https://bbs.archlinux.org/viewtopic.php?id=280157 any arch ?
-    export DFLAGS='-L-zrelro -L-znow'
+    #export DFLAGS='-L-zrelro -L-znow'
     ./configure --prefix=/usr
-    make
+    make CFLAGS="-mtune=native -march=native -O3" CXXFLAGS="-mtune=native -march=native -O3"
 }
 
 package() {
-    cd "${srcdir}/.."
+    cd "${srcdir}/../build"
     make DESTDIR="${pkgdir}/" install
 }
