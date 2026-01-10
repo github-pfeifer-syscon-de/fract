@@ -1,4 +1,4 @@
-AC_INIT([Fract Program], [0.1], [fract@pfeifer-syscon.de])
+AC_INIT([Fract Program], [0.1], [RolandPf67@googlemail.com])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 dnl use -no-portablitity to stop complaining about $(shell... in res Makefile.am
