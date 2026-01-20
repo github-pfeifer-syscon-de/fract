@@ -78,6 +78,7 @@ public:
     std::complex<T> Function(std::complex<T> &z, std::complex<T> &q);
     std::complex<T> Derivative(std::complex<T> &z);
     using Worker<T>::getParam;
+    static constexpr T tolerance{0.000001};
 private:
 
 };

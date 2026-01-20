@@ -47,19 +47,19 @@ public:
     guint getHeight();
     guint getPixmapWidth();
     guint getPixmapHeight();
-    long double getImStart();
-    long double getReStart();
-    long double getReJulia();
-    long double getImJulia();
-    void setReJulia(long double reJulia);
-    void setImJulia(long double imJulia);
-    void setReStart(long double reStart);
-    void setReEnd(long double reEnd);
-    void setImStart(long double imStart);
-    void setImEnd(long double imEnd);
+    double getImStart();
+    double getReStart();
+    double getReJulia();
+    double getImJulia();
+    void setReJulia(double reJulia);
+    void setImJulia(double imJulia);
+    void setReStart(double reStart);
+    void setReEnd(double reEnd);
+    void setImStart(double imStart);
+    void setImEnd(double imEnd);
 
-    long double getImStep();
-    long double getReStep();
+    double getImStep();
+    double getReStep();
 
     std::shared_ptr<Param> update(Cairo::RectangleInt saveRect);
     void build_color_map();
@@ -91,19 +91,19 @@ public:
     static constexpr auto RE_JULIA{"reJulia: "};
     static constexpr auto IM_JULIA{"imJulia: "};    
     
-    static enum Function char2Function(gchar function);
+    static enum Function char2Function(guint32 function);
 private:
     enum Function m_function;
     guint32 m_samples; // Multisampling used on x&y so 4 will result in 16 samples per display pixel
     guint m_width;
     guint m_height;
     guint m_depth;
-    long double m_re_start;
-    long double m_re_end;
-    long double m_im_start;
-    long double m_im_end;
-    long double m_re_julia;
-    long double m_im_julia;
+    double m_re_start;
+    double m_re_end;
+    double m_im_start;
+    double m_im_end;
+    double m_re_julia;
+    double m_im_julia;
     std::vector<guint32> m_color_map;
     bool m_primaryWindow;
     std::vector<Gdk::Color> m_colors;

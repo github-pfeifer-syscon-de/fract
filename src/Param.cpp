@@ -126,73 +126,73 @@ Param::getFunction()
 }
 
 void
-Param::setReStart(long double reStart)
+Param::setReStart(double reStart)
 {
     m_re_start = reStart;
 }
 
 void
-Param::setReEnd(long double reEnd)
+Param::setReEnd(double reEnd)
 {
     m_re_end = reEnd;
 }
 
 void
-Param::setImStart(long double imStart)
+Param::setImStart(double imStart)
 {
     m_im_start = imStart;
 }
 
 void
-Param::setImEnd(long double imEnd)
+Param::setImEnd(double imEnd)
 {
     m_im_end = imEnd;
 }
 
-long double
+double
 Param::getImStep()
 {
-    return(m_im_end - m_im_start) / (long double) (getPixmapHeight() - 1);
+    return(m_im_end - m_im_start) / static_cast<double>(getPixmapHeight() - 1);
 }
 
-long double
+double
 Param::getReStep()
 {
-    return(m_re_end - m_re_start) / (long double) (getPixmapWidth() - 1);
+    return(m_re_end - m_re_start) / static_cast<double>(getPixmapWidth() - 1);
 }
 
-long double
+double
 Param::getImStart()
 {
     return m_im_start;
 }
 
-long double
+double
 Param::getReStart()
 {
     return m_re_start;
 }
 
-long double
+double
 Param::getReJulia()
 {
     return m_re_julia;
 }
 
-long double
+double
 Param::getImJulia()
 {
     return m_im_julia;
 }
 
 void
-Param::setReJulia(long double reJulia)
+Param::setReJulia(double reJulia)
 {
     m_re_julia = reJulia;
 }
 
 void
-Param::setImJulia(long double imJulia)
+Param::setImJulia(double imJulia)
 {
     m_im_julia = imJulia;
 }
@@ -229,13 +229,13 @@ Param::update(Cairo::RectangleInt saveRect)
     saveRect.width *= m_samples;
     saveRect.height *= m_samples;
 
-    long double im_step = getImStep();
-    long double re_step = getReStep();
+    auto im_step = getImStep();
+    auto re_step = getReStep();
     auto ret = std::make_shared<Param>(*this);
-    ret->m_re_start = m_re_start + re_step * (long double) saveRect.x;
-    ret->m_re_end = ret->m_re_start + re_step * (long double) (saveRect.width);
-    ret->m_im_start = m_im_start + im_step * (long double) saveRect.y;
-    ret->m_im_end = ret->m_im_start + im_step * (long double) (saveRect.height);
+    ret->m_re_start = m_re_start + re_step * static_cast<double>(saveRect.x);
+    ret->m_re_end = ret->m_re_start + re_step * static_cast<double>(saveRect.width);
+    ret->m_im_start = m_im_start + im_step * static_cast<double>(saveRect.y);
+    ret->m_im_end = ret->m_im_start + im_step * static_cast<double>(saveRect.height);
 
     return ret;
 }
@@ -244,7 +244,7 @@ void
 Param::build_color_map()
 {
     m_color_map.resize(m_depth);
-    double depth_step = (double) m_depth / (double) m_colors.size();
+    double depth_step = static_cast<double>(m_depth) / static_cast<double>(m_colors.size());
     for (guint32 d = 0; d < m_depth; ++d) {
         if (m_coloring == Coloring::Strech) {
             m_color_map[d] = map(d, depth_step);
@@ -256,16 +256,16 @@ guint32
 Param::map(gint32 d, double depth_step)
 {
     auto i = (guint32) ((double) d / depth_step);
-    guint32 lastValue = i * depth_step;
-    guint32 iv = (i + 1) * depth_step;
+    guint32 lastValue = i * static_cast<guint32>(depth_step);
+    guint32 iv = (i + 1) * static_cast<guint32>(depth_step);
     Gdk::Color color = m_colors[i];
-    gint32 c = (d - lastValue) * 255 * m_colors.size() / m_depth;
+    guint32 c = (d - lastValue) * 255 * static_cast<guint32>(m_colors.size()) / m_depth;
     guint32 r = (guint32) (color.get_red_p() * c);
     guint32 g = (guint32) (color.get_green_p() * c);
     guint32 b = (guint32) (color.get_blue_p() * c);
     if (i > 0) {
         Gdk::Color lastColor = m_colors[i - 1];
-        gint32 c = (iv - d) * 255 * m_colors.size() / m_depth;
+        guint32 c = (iv - d) * 255 * static_cast<guint32>(m_colors.size()) / m_depth;
         r += (guint32) (lastColor.get_red_p() * c);
         g += (guint32) (lastColor.get_green_p() * c);
         b += (guint32) (lastColor.get_blue_p() * c);
@@ -328,7 +328,7 @@ Param::save(std::string filename)
 }
 
 enum Function 
-Param::char2Function(gchar function)
+Param::char2Function(guint32 function)
 {
     switch (function) {
     case 'J':
@@ -422,7 +422,7 @@ Param::open(std::string filename)
 gint32
 Param::get_color_count() const
 {
-    return m_colors.size();
+    return static_cast<gint32>(m_colors.size());
 }
 
 void

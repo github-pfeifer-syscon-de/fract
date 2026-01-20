@@ -109,14 +109,14 @@ FractView::on_motion_notify_event(GdkEventMotion* event)
         Cairo::RectangleInt lastRect = *m_selectedRect;
 
         if (event->x < m_selectedRect->x)
-            m_selectedRect->x = event->x;
+            m_selectedRect->x = static_cast<int>(event->x);
         else
-            m_selectedRect->width = event->x - m_selectedRect->x;
+            m_selectedRect->width = static_cast<int>(event->x) - m_selectedRect->x;
 
         if (event->y < m_selectedRect->y)
-            m_selectedRect->y = event->y;
+            m_selectedRect->y = static_cast<int>(event->y);
         else
-            m_selectedRect->height = event->y - m_selectedRect->y;
+            m_selectedRect->height = static_cast<int>(event->y) - m_selectedRect->y;
 
         Cairo::RectangleInt r = *m_selectedRect;
         int xm = std::max(r.x + r.width, lastRect.x + lastRect.width);
@@ -186,8 +186,8 @@ FractView::on_button_press_event(GdkEventButton* event)
     if (event->button == GDK_BUTTON_PRIMARY) {
         if (m_selectedRect == nullptr) {
             m_selectedRect = new(Cairo::RectangleInt);
-            m_selectedRect->x = event->x;
-            m_selectedRect->y = event->y;
+            m_selectedRect->x = static_cast<int>(event->x);
+            m_selectedRect->y = static_cast<int>(event->y);
             m_selectedRect->width = 1;
             m_selectedRect->height = 1;
         }
@@ -473,8 +473,8 @@ FractView::notifyRow(guint row, uint32_t *image)
     std::lock_guard<std::mutex> lock(m_notifyMutex);
     // try to modify in a locked context
     auto img = reinterpret_cast<uint32_t*>(m_pixmap->get_data());
-    uint32_t wordStride = m_pixmap->get_stride() / sizeof(int32_t);
-    int i = (row * wordStride); // related to image format ARGB32, matches pointer guint32
+    auto wordStride = static_cast<uint32_t>(m_pixmap->get_stride()) / static_cast<uint32_t>(sizeof(int32_t));
+    auto i = (row * wordStride); // related to image format ARGB32, matches pointer guint32
     {
         std::lock_guard<std::mutex> lock(m_redrawMutex);
         m_pixmap->mark_dirty(0, row, m_param->getWidth(), 1);

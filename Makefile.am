@@ -1,4 +1,6 @@
 
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+
 SUBDIRS = res src
 
 dist_doc_DATA = \
@@ -8,7 +10,6 @@ dist_doc_DATA = \
 	ChangeLog \
 	INSTALL \
 	NEWS
-
 
 # Remove doc directory on uninstall
 uninstall-local:

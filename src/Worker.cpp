@@ -97,7 +97,7 @@ Worker<T>::compute(std::complex<T> x)
         if (x2.real() + x2.imag() >= 4.0)
             break;
         T xt = x2.real() - x2.imag();
-        x.imag(2.0l * x.real() * x.imag() + q.imag());
+        x.imag(2.0 * x.real() * x.imag() + q.imag());
         x.real(xt + q.real());
     }
     return iter;
@@ -171,8 +171,7 @@ NewtonWorker<T>::Derivative(std::complex<T> &z)
 // http://www.wikiwand.com/en/Newton_fractal
 
 template<class T> guint
-NewtonWorker<T>::compute(std::complex<T> x)
-{
+NewtonWorker<T>::compute(std::complex<T> x) {
     std::complex<T> q;
     prepare(x, q);
     auto param = getParam();
@@ -180,12 +179,11 @@ NewtonWorker<T>::compute(std::complex<T> x)
     guint iter = 0;
     std::complex<T> roots[3] = //Roots (solutions) of the polynomial
     {
-        std::complex<T>(1.0l, 0),
+        std::complex<T>(1.0, 0),
         std::complex<T>(-.5, std::sqrt(3.0) / 2.0),
         std::complex<T>(-.5, -std::sqrt(3.0) / 2.0)
     };
 
-    T tolerance = 0.000001l;
     for (; iter < depth; ++iter) {
         x -= Function(x, q) / Derivative(x);
         for (guint i = 0; i < sizeof(roots) / sizeof(std::complex<T>); i++) {

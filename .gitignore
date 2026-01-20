@@ -64,3 +64,5 @@
 /pkg/
 /src/.deps/
 /compile_commands.json
+/PKGBUILD
+/options.txt
