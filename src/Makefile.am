@@ -3,26 +3,14 @@ bin_PROGRAMS = fract
 
 fract_LDFLAGS = @EXTRA_LDFLAGS@
 
-# this is a no-tech approach,
-#  if you don't like gcc/clang, it this should also work without these options
-#  most options originate from https://github.com/cpp-best-practices/cmake_template/blob/main/cmake/Hardening.cmake
-#    -W... the usual warings
-#    GLIBC++ Assertions (vector[], string[], ...) enabled
-#    g++/clang -fstack-protector-strong enabled
-#    g++/clang -fcf-protection enabled
-#    undefined behaviour sanitizer
+fract_CFLAGS = $(WARN_CFLAGS)
+fract_CXXFLAGS = $(WARN_CXXFLAGS)
+
 if RELEASE
-fract_CXXFLAGS = -mtune=native -march=native -O3
+fract_CXXFLAGS += $(OPTIM_CXXFLAGS)
 else
-fract_CFLAGS = -Wall
-fract_CXXFLAGS = -Wall \
-        -Wconversion \
-        -Wpedantic \
-        -D_GLIBCXX_ASSERTIONS \
-        -fstack-protector-strong \
-        -fcf-protection \
-        -fsanitize=undefined
-fract_LDFLAGS += -fsanitize=undefined
+fract_CXXFLAGS += $(INSTUMENT_CXXFLAGS)
+fract_LDFLAGS += $(INSTUMENT_LINKFLAGS)
 endif
 
 fract_CPPFLAGS = $(GLIBMM_CFLAGS) \
