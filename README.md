@@ -6,16 +6,47 @@ And a improved rendering with antialiasing.
 
 ![fract](fract.png "fract")
 
-The usual autotool procedure should work (expects gcc/clang? otherwise see Building):
+## Building
 
-For a out of tree compile this is the procedure after cloning:
+
+### Debian
+
+Use the following commands to get the prerequisits (run with sudo or as root):
 <pre>
-   autoreconf -fis
-   mkdir build
+apt-get install git build-essential meson
+apt-get install libgtkmm-3.0-dev
+</pre>
+
+The compile goes this way:
+<pre>
+   meson setup build -Dprefix=/usr
    cd build
-   ../configure --prefix=/usr
-   make
-   ./src/fract
+   meson compile
+   ./fract
+</pre>
+
+If you decide to keep it (run with sudo or as root):
+<pre>
+   cd build
+   meson install
+</pre>
+
+### Windows
+
+Use msys2 choose and preferred flavor and stick to it (a bit more ist explained with genericImg):
+<pre>
+pacman -S base-devel
+pacman -S ${MINGW_PACKAGE_PREFIX}-gcc
+pacman -S ${MINGW_PACKAGE_PREFIX}-meson
+pacman -S ${MINGW_PACKAGE_PREFIX}-gtkmm3
+</pre>
+
+The compile goes this way:
+<pre>
+   meson setup build -Dprefix=${MINGW_PREFIX}
+   cd build
+   meson compile
+   ./fract.exe
 </pre>
 
 ## Usage
@@ -23,12 +54,3 @@ For a out of tree compile this is the procedure after cloning:
 - All options are shown in a context menu with the right mouse click
 - To zoom just press the left mouse button and drag a rectangle for the next view
 
-## Building
-
-This comes with ignoring some of the autotools best practices, 
-the compile options for gcc/clang are integrated in Makefiles.
-- as optimization is required for this kind of program
-- handling of compile options may not be easy for everyone trying this
-- i'm too lazy to fill in debug settings (use `configure ... ---enable-debug=yes` to get them)
-- the autotools offer not many options to make compile options dynamic (at least not without m4 macro magic)
-- sorry all those no gcc friends see Makefile.am (windows gui switch) and also src/Makefile.am (optimization-/debug options) and adapt these to your compiler
