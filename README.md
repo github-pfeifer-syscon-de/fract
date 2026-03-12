@@ -33,7 +33,7 @@ If you decide to keep it (run with sudo or as root):
 
 ### Windows
 
-Use msys2 choose and preferred flavor and stick to it (a bit more ist explained with genericImg):
+Use msys2 choose a preferred flavor and stick to it (a bit more ist explained with genericImg):
 <pre>
 pacman -S base-devel
 pacman -S ${MINGW_PACKAGE_PREFIX}-gcc

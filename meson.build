@@ -8,11 +8,23 @@ project('fract', 'c', 'cpp'
     , version: '0.1')
 
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
-add_project_arguments('-DPACKAGE_DATA_DIR="' + pkgdatadir + '"', language: 'cpp')
+add_project_arguments('-DPACKAGE_DATA_DIR="' + pkgdatadir + '"', language: ['cpp','c'])
+add_project_arguments('-DPACKAGE="' + meson.project_name() + '"', language: ['cpp','c'])
 conf = configuration_data()
-conf.set_quoted('VERSION', meson.project_version())     # Surround the version in quotes to make it a C string
+conf.set_quoted('FRACT_VERSION', meson.project_version())     # Surround the version in quotes to make it a C string
 configure_file(output : meson.project_name() + '_config.h'
     , configuration : conf)
+
+disable_flags = [
+     '-Wno-unused-parameter'    # limit the compiler noisiness
+    ,'-Wno-overlength-strings'  # this matters only if you are pedantic
+]
+cc = meson.get_compiler('c')
+foreach cflag : disable_flags
+    if cc.has_argument(cflag)
+        add_project_arguments(cflag, language: ['c', 'cpp'])
+    endif
+endforeach
 
 subdir('src')
 subdir('res')
