@@ -19,7 +19,7 @@ install_data(
     , install_dir: join_paths(dataDir, 'applications'))
 
 win_res_file = []
-if target_machine.system() == 'windows'     # expects resource compiler, disable if you don't have one (for me it came with windows sdk i guess)
+if target_machine.system() == 'windows'     # expects resource compiler, disable if you don't have one (part of msys2 but not claimed by any package... )
     win_res_file = windows.compile_resources('win.rc'
                             ,args: []
                             ,depend_files: [meson.project_name() + '.ico']
