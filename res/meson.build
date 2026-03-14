@@ -2,6 +2,7 @@
 #
 # see https://mesonbuild.com/Gnome-module.html
 gnome = import('gnome')
+windows = import('windows')
 
 app_resources = gnome.compile_resources(
     'resources', 'fract.gresources.xml'
@@ -16,3 +17,12 @@ install_data(
 install_data(
       meson.project_name() + '.desktop'
     , install_dir: join_paths(dataDir, 'applications'))
+
+win_res_file = []
+if target_machine.system() == 'windows'     # expects resource compiler, disable if you don't have one (for me it came with windows sdk i guess)
+    win_res_file = windows.compile_resources('win.rc'
+                            ,args: []
+                            ,depend_files: [meson.project_name() + '.ico']
+                           )
+
+endif

@@ -29,6 +29,7 @@ endforeach
 subdir('src')
 subdir('res')
 sources += app_resources
+sources += win_res_file 
 gtkmm3_deps     = dependency('gtkmm-3.0')
 glibmm2_deps    = dependency('glibmm-2.4 giomm-2.4')
 thread_deps     = dependency('threads')
