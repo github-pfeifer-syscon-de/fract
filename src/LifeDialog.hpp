@@ -39,7 +39,10 @@ public:
     void fillRandom(uint32_t randomness);
     bool nextGen();
     void update(Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface, bool renderWithColor);
-    void set(int32_t x, int32_t y, bool set);
+    void set(double eventX, double eventY, bool set);
+
+protected:
+    std::unique_ptr<std::vector<uint32_t>> getRowCount(uint32_t row);
 
 private:
     uint32_t m_width;
@@ -69,6 +72,7 @@ public:
     void random();
     void clear();
     bool drawing_clicked(GdkEventButton* event);
+    bool drawing_motion(GdkEventMotion* event);
     static void showDialog(Gtk::Application *appl);
 protected:
     void createGrid();
@@ -90,7 +94,7 @@ private:
     Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface;
     std::shared_ptr<LifeGrid> m_lifeGrid;
     sigc::connection m_timer;
-
+    guint m_mouseButton{};
 };
 
 

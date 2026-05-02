@@ -29,9 +29,7 @@ LifeGrid::LifeGrid(uint32_t width, uint32_t height)
 {
     m_grid = std::make_unique<std::vector<bool>>(getAllocation(), false);
     m_changed = std::make_unique<std::vector<bool>>(getAllocation(), false);
-    m_scaleFactor =
-        m_width >= 512 || m_height >= 512 ? 1 :
-        m_width >= 256 ? 2 : 3;
+    m_scaleFactor = 512 / std::max(m_width, m_height);
 }
 
 size_t
@@ -92,63 +90,60 @@ LifeGrid::fillRandom(uint32_t randomness)
     m_generation = 0;
 }
 
+// remember sums avoid multiple index eval
+//   the calculation of prepared sums reduces times from ~3ms to ~2ms
+std::unique_ptr<std::vector<uint32_t>>
+LifeGrid::getRowCount(uint32_t row)
+{
+    auto rowCnt = std::make_unique<std::vector<uint32_t>>(m_width);
+    const auto rowsOffs = row * m_width;
+    uint32_t prevCellCnt = (*m_grid)[rowsOffs + (m_width - 1)] ? 1 : 0;
+    uint32_t thisCellCnt = (*m_grid)[rowsOffs + 0] ? 1 : 0;
+    for (uint32_t cell = 0; cell < m_width; ++cell) {
+        const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
+        uint32_t nextCellCnt = (*m_grid)[rowsOffs + nextCell] ? 1 : 0;
+        (*rowCnt)[cell] = prevCellCnt + thisCellCnt + nextCellCnt;
+        prevCellCnt = thisCellCnt;
+        thisCellCnt = nextCellCnt;
+    }
+    return rowCnt;
+}
+
 bool
 LifeGrid::nextGen()
 {
-    auto nextGrid = std::make_unique<std::vector<bool>>(getAllocation(), false);
     const auto start{std::chrono::steady_clock::now()};
     bool anySet{};
+    auto prevRowCnt = getRowCount(m_height - 1);   // wrap at edges
+    auto zeroRowCnt = getRowCount(0);   // since we are overwriting cells need stored instance
+    auto thisRowCnt = getRowCount(0);
     for (uint32_t row = 0; row < m_height; ++row) {
         const auto rowsOffs = row * m_width;
-        const auto prevRow = row > 0 ? row - 1 : m_height - 1;    // wrap surface
-        const auto prevRowOffs = prevRow * m_width;
-        const auto nextRow = row < m_height - 1 ? row + 1 : 0;
-        const auto nextRowOffs = nextRow * m_width;
+        std::unique_ptr<std::vector<uint32_t>> nextRowCnt;
+        if (row < m_height - 1) {
+            nextRowCnt = getRowCount(row + 1);
+        }
+        else {
+            nextRowCnt = std::move(zeroRowCnt);
+        }
         for (uint32_t cell = 0; cell < m_width; ++cell) {
-            uint32_t cnt{};
-            const auto prevCell = cell > 0 ? cell - 1 : m_width - 1;
-            const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
-            if ((*m_grid)[prevRowOffs + prevCell]) {
-                ++cnt;
-            }
-            if ((*m_grid)[prevRowOffs + cell]) {
-                ++cnt;
-            }
-            if ((*m_grid)[prevRowOffs + nextCell]) {
-                ++cnt;
-            }
-
-            if ((*m_grid)[rowsOffs + prevCell]) {
-                ++cnt;
-            }
-            if ((*m_grid)[rowsOffs + nextCell]) {
-                ++cnt;
-            }
-
-            if ((*m_grid)[nextRowOffs + prevCell]) {
-                ++cnt;
-            }
-            if ((*m_grid)[nextRowOffs + cell]) {
-                ++cnt;
-            }
-            if ((*m_grid)[nextRowOffs + nextCell]) {
-                ++cnt;
-            }
             bool set;
+            auto cnt = (*prevRowCnt)[cell] + (*thisRowCnt)[cell] + (*nextRowCnt)[cell];
             if ((*m_grid)[rowsOffs + cell]) {
-                set = cnt >= 2 && cnt <= 3;
-                (*nextGrid)[rowsOffs + cell] = set;
+                set = cnt >= 3 && cnt <= 4;     // original values are 2,3 but here we sum the cell we are on as well
+                (*m_grid)[rowsOffs + cell] = set;
                 (*m_changed)[rowsOffs + cell] = !set;
             }
             else {
                 set = cnt == 3;
-                (*nextGrid)[rowsOffs + cell] = set;
+                (*m_grid)[rowsOffs + cell] = set;
                 (*m_changed)[rowsOffs + cell] = set;
             }
             anySet |= set;
         }
+        prevRowCnt = std::move(thisRowCnt);
+        thisRowCnt = std::move(nextRowCnt);
     }
-    m_grid = std::move(nextGrid);
     const auto end{std::chrono::steady_clock::now()};
     auto duration = std::chrono::duration<double>(end - start);
     //std::cout << "nextGen "  << duration.count() << "s" << std::endl;
@@ -208,12 +203,17 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface> imageSurface, bool renderWit
 }
 
 void
-LifeGrid::set(int32_t x, int32_t y, bool set)
+LifeGrid::set(double eventX, double eventY, bool set)
 {
-    const auto rowsOffs = y * m_width;
-    (*m_grid)[rowsOffs + x] = set;
-    (*m_changed)[rowsOffs + x] = true;
-    m_generation = 0;
+    auto ix = static_cast<int32_t>(eventX / static_cast<double>(m_scaleFactor));
+    auto iy = static_cast<int32_t>(eventY / static_cast<double>(m_scaleFactor));
+    if (ix >= 0 && ix < static_cast<int32_t>(m_width)
+     && iy >= 0 && iy < static_cast<int32_t>(m_height)) {
+        const auto rowsOffs = iy * m_width;
+        (*m_grid)[rowsOffs + ix] = set;
+        (*m_changed)[rowsOffs + ix] = true;
+        m_generation = 0;
+     }
 }
 
 
@@ -234,12 +234,23 @@ LifeDialog::LifeDialog(BaseObjectType* cobject
     builder->get_widget("buttonClear", m_clear);
     builder->get_widget("generation", m_generation);
 
-    m_apply->signal_clicked().connect(sigc::mem_fun(*this, &LifeDialog::apply));
-    m_random->signal_clicked().connect(sigc::mem_fun(*this, &LifeDialog::random));
-    m_clear->signal_clicked().connect(sigc::mem_fun(*this, &LifeDialog::clear));
-    m_drawing->signal_draw().connect(sigc::mem_fun(*this, &LifeDialog::drawArea));
-    m_drawing->add_events(Gdk::EventMask::BUTTON_PRESS_MASK);
-    m_drawing->signal_button_press_event().connect(sigc::mem_fun(*this, &LifeDialog::drawing_clicked));
+    m_apply->signal_clicked().connect(
+        sigc::mem_fun(*this, &LifeDialog::apply));
+    m_random->signal_clicked().connect(
+        sigc::mem_fun(*this, &LifeDialog::random));
+    m_clear->signal_clicked().connect(
+        sigc::mem_fun(*this, &LifeDialog::clear));
+    m_drawing->signal_draw().connect(
+        sigc::mem_fun(*this, &LifeDialog::drawArea));
+    m_drawing->add_events(Gdk::EventMask::BUTTON_PRESS_MASK
+                        | Gdk::EventMask::BUTTON_RELEASE_MASK
+                        | Gdk::EventMask::BUTTON_MOTION_MASK);
+    m_drawing->signal_button_press_event().connect(
+        sigc::mem_fun(*this, &LifeDialog::drawing_clicked));
+    m_drawing->signal_button_release_event().connect(
+        sigc::mem_fun(*this, &LifeDialog::drawing_clicked));
+    m_drawing->signal_motion_notify_event().connect(
+        sigc::mem_fun(*this, &LifeDialog::drawing_motion));
 }
 
 void
@@ -254,16 +265,25 @@ LifeDialog::on_response(int response_id)
 bool
 LifeDialog::drawing_clicked(GdkEventButton* event)
 {
-    std::cout << "x " << event->x << " y " << event->y << " btn " << event->button << std::endl;
-    createGrid();
-    auto ix = static_cast<int32_t>(event->x / static_cast<double>(m_lifeGrid->getScaleFactor()));
-    auto iy = static_cast<int32_t>(event->y / static_cast<double>(m_lifeGrid->getScaleFactor()));
-    if (ix >= 0 && ix < static_cast<int32_t>(m_lifeGrid->getWidth())
-     && iy >= 0 && iy < static_cast<int32_t>(m_lifeGrid->getHeight())) {
-        m_lifeGrid->set(ix, iy, event->button == GDK_BUTTON_PRIMARY);
+    //std::cout << "x " << event->x << " y " << event->y << " btn " << event->button << std::endl;
+    m_mouseButton = event->button;
+    if (m_mouseButton != 0) {
+        createGrid();
+        m_lifeGrid->set(event->x, event->y, event->button == GDK_BUTTON_PRIMARY);
         m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
         m_drawing->queue_draw();
-        //return false;
+    }
+    return true;    // event handled
+}
+
+bool
+LifeDialog::drawing_motion(GdkEventMotion* event)
+{
+    if (m_mouseButton != 0) {
+        createGrid();
+        m_lifeGrid->set(event->x, event->y, m_mouseButton  == GDK_BUTTON_PRIMARY);
+        m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
+        m_drawing->queue_draw();
     }
     return true;    // event handled
 }
@@ -304,11 +324,10 @@ LifeDialog::next()
     bool next = m_lifeGrid->nextGen();
     m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
     m_drawing->queue_draw();
-    m_generation->set_text(Glib::ustring::sprintf("Generation %u time %.1lfms"
+    m_generation->set_text(Glib::ustring::sprintf("Generation %u time\u2205 %.1lfms"
         , m_lifeGrid->getGeneration(), m_lifeGrid->getComputeTime() * 1000.0));
     return next;
 }
-
 
 void
 LifeDialog::random()
