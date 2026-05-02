@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/de/pfeifer_syscon/fract">
     <file preprocess="xml-stripblanks">abt-dlg.ui</file>
+    <file preprocess="xml-stripblanks">life-dlg.ui</file>
     <file>fract.png</file>
   </gresource>
 </gresources>

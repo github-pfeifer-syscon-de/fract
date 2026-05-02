@@ -54,3 +54,6 @@ The compile goes this way:
 - All options are shown in a context menu with the right mouse click
 - To zoom just press the left mouse button and drag a rectangle for the next view
 
+## Life
+
+Also available a "conways game of life" implementation. 

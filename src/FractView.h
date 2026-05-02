@@ -70,6 +70,7 @@ private:
     void reinit_redraw();
     void fractWinClose(gpointer fract);
     void on_menu_param();
+    void on_view_life();
     void save_png(Glib::ustring filename);
 };
 

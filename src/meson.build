@@ -6,5 +6,6 @@ sources = files(
 	, 'Param.cpp'
 	, 'ParamDlg.cpp'
 	, 'Worker.cpp'
+	, 'LifeDialog.cpp'
     )
 

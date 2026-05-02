@@ -24,9 +24,10 @@
 #include <exception>
 
 #include "FractView.h"
+#include "FractWin.h"
+#include "LifeDialog.hpp"
 #include "Param.h"
 #include "ParamDlg.h"
-#include "FractWin.h"
 
 FractView::FractView(Gtk::Window &_parent, std::shared_ptr<Param> _param, Gtk::Application *appl)
 : m_param{_param}
@@ -264,6 +265,9 @@ FractView::build_popup()
             ++n;
         }
     }
+    auto mlife = Gtk::make_managed<Gtk::MenuItem>("_Game of life", true);
+    mlife->signal_activate().connect(sigc::mem_fun(*this, &FractView::on_view_life));
+    pMenuPopup->append(* mlife);
 
     pMenuPopup->show_all();
     return pMenuPopup;
@@ -322,6 +326,12 @@ FractView::on_menu_param()
         paramDlg.refresh(m_param);
         start_new();
     }
+}
+
+void
+FractView::on_view_life()
+{
+    LifeDialog::showDialog(m_appl);
 }
 
 std::shared_ptr<Param>
