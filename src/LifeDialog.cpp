@@ -23,13 +23,13 @@
 
 #include <ranges>
 
-LifeGrid::LifeGrid(uint32_t width, uint32_t height)
+LifeGrid::LifeGrid(int32_t width, int32_t height)
 : m_width{width}
 , m_height{height}
 {
     m_grid = std::make_unique<std::vector<bool>>(getAllocation(), false);
     m_changed = std::make_unique<std::vector<bool>>(getAllocation(), false);
-    m_scaleFactor = 512 / std::max(m_width, m_height);
+    m_scaleFactor = std::max(1, 512 / std::max(m_width, m_height));
 }
 
 size_t
@@ -38,25 +38,25 @@ LifeGrid::getAllocation() const
     return m_width * m_height;
 }
 
-uint32_t
+int32_t
 LifeGrid::getWidth() const
 {
     return m_width;
 }
 
-uint32_t
+int32_t
 LifeGrid::getHeight() const
 {
     return m_height;
 }
 
-uint32_t
+int32_t
 LifeGrid::getScaleFactor() const
 {
     return m_scaleFactor;
 }
 
-uint32_t
+int32_t
 LifeGrid::getGeneration() const
 {
     return m_generation;
@@ -77,7 +77,7 @@ LifeGrid::fill(bool state)
 }
 
 void
-LifeGrid::fillRandom(uint32_t randomness)
+LifeGrid::fillRandom(int32_t randomness)
 {
     std::random_device dev;
     std::mt19937 rng(dev());
@@ -92,16 +92,16 @@ LifeGrid::fillRandom(uint32_t randomness)
 
 // remember sums avoid multiple index eval
 //   the calculation of prepared sums reduces times from ~3ms to ~2ms
-std::unique_ptr<std::vector<uint32_t>>
-LifeGrid::getRowCount(uint32_t row)
+std::unique_ptr<std::vector<int32_t>>
+LifeGrid::getRowCount(int32_t row)
 {
-    auto rowCnt = std::make_unique<std::vector<uint32_t>>(m_width);
+    auto rowCnt = std::make_unique<std::vector<int32_t>>(m_width);
     const auto rowsOffs = row * m_width;
-    uint32_t prevCellCnt = (*m_grid)[rowsOffs + (m_width - 1)] ? 1 : 0;
-    uint32_t thisCellCnt = (*m_grid)[rowsOffs + 0] ? 1 : 0;
-    for (uint32_t cell = 0; cell < m_width; ++cell) {
+    int32_t prevCellCnt = (*m_grid)[rowsOffs + (m_width - 1)] ? 1 : 0;
+    int32_t thisCellCnt = (*m_grid)[rowsOffs + 0] ? 1 : 0;
+    for (int32_t cell = 0; cell < m_width; ++cell) {
         const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
-        uint32_t nextCellCnt = (*m_grid)[rowsOffs + nextCell] ? 1 : 0;
+        int32_t nextCellCnt = (*m_grid)[rowsOffs + nextCell] ? 1 : 0;
         (*rowCnt)[cell] = prevCellCnt + thisCellCnt + nextCellCnt;
         prevCellCnt = thisCellCnt;
         thisCellCnt = nextCellCnt;
@@ -117,16 +117,16 @@ LifeGrid::nextGen()
     auto prevRowCnt = getRowCount(m_height - 1);   // wrap at edges
     auto zeroRowCnt = getRowCount(0);   // since we are overwriting cells need stored instance
     auto thisRowCnt = getRowCount(0);
-    for (uint32_t row = 0; row < m_height; ++row) {
+    for (int32_t row = 0; row < m_height; ++row) {
         const auto rowsOffs = row * m_width;
-        std::unique_ptr<std::vector<uint32_t>> nextRowCnt;
+        std::unique_ptr<std::vector<int32_t>> nextRowCnt;
         if (row < m_height - 1) {
             nextRowCnt = getRowCount(row + 1);
         }
         else {
             nextRowCnt = std::move(zeroRowCnt);
         }
-        for (uint32_t cell = 0; cell < m_width; ++cell) {
+        for (int32_t cell = 0; cell < m_width; ++cell) {
             bool set;
             auto cnt = (*prevRowCnt)[cell] + (*thisRowCnt)[cell] + (*nextRowCnt)[cell];
             if ((*m_grid)[rowsOffs + cell]) {
@@ -164,10 +164,10 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface> imageSurface, bool renderWit
     //double red;
     //double green;
     //double blue;
-    const auto rowStride = (imageSurface->get_stride() / sizeof(uint32_t));
-    for (uint32_t row = 0; row < m_height; ++row) {
+    const auto rowStride = (imageSurface->get_stride() / sizeof(int32_t));
+    for (int32_t row = 0; row < m_height; ++row) {
         const auto cellOffs = row * m_width;
-        for (uint32_t cell = 0; cell < m_width; ++cell) {
+        for (int32_t cell = 0; cell < m_width; ++cell) {
             auto cellVal = (*m_grid)[cellOffs + cell];
             auto cellChanged = (*m_changed)[cellOffs + cell];
             if (renderWithColor) {
@@ -185,9 +185,9 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface> imageSurface, bool renderWit
                     | (cellVal ? 0x00ff00 : 0x0)
                     | (cellVal ? 0x0000ff : 0x0);
             }
-            for (uint32_t j = 0; j < m_scaleFactor; ++j) {
+            for (int32_t j = 0; j < m_scaleFactor; ++j) {
                 auto rowPixOffs = data + ((row * m_scaleFactor + j) * rowStride) + cell * m_scaleFactor;
-                for (uint32_t i = 0; i < m_scaleFactor; ++i) {
+                for (int32_t i = 0; i < m_scaleFactor; ++i) {
                     rowPixOffs[i] = rgb;
                 }
             }
@@ -297,7 +297,7 @@ LifeDialog::apply()
         return;
     }
     createGrid();
-    uint32_t delay = static_cast<uint32_t>(m_delay->get_value_as_int());
+    int32_t delay = m_delay->get_value_as_int();
     m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &LifeDialog::next), delay);
     //m_apply->set_label("Stop");
 }
@@ -336,7 +336,7 @@ LifeDialog::random()
         m_timer.disconnect();   // stop update
     }
     createGrid();
-    m_lifeGrid->fillRandom(static_cast<uint32_t>(m_randomFactor->get_value_as_int()));
+    m_lifeGrid->fillRandom(m_randomFactor->get_value_as_int());
     m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
     m_drawing->queue_draw();
 }
@@ -356,8 +356,8 @@ LifeDialog::clear()
 void
 LifeDialog::createGrid()
 {
-    uint32_t width = static_cast<uint32_t>(m_width->get_value_as_int());
-    uint32_t height = static_cast<uint32_t>(m_height->get_value_as_int());
+    int32_t width = m_width->get_value_as_int();
+    int32_t height = m_height->get_value_as_int();
     if (!m_lifeGrid
       || m_lifeGrid->getWidth() != width
       || m_lifeGrid->getHeight() != height) {

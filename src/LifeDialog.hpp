@@ -25,30 +25,30 @@
 class LifeGrid
 {
 public:
-    LifeGrid(uint32_t width, uint32_t height);
+    LifeGrid(int32_t width, int32_t height);
     explicit LifeGrid(const LifeGrid& orig) = delete;
     virtual ~LifeGrid() = default;
 
     size_t getAllocation() const;
-    uint32_t getWidth() const;
-    uint32_t getHeight() const;
-    uint32_t getScaleFactor() const;
-    uint32_t getGeneration() const;
+    int32_t getWidth() const;
+    int32_t getHeight() const;
+    int32_t getScaleFactor() const;
+    int32_t getGeneration() const;
     double getComputeTime() const;
     void fill(bool state = false);
-    void fillRandom(uint32_t randomness);
+    void fillRandom(int32_t randomness);
     bool nextGen();
     void update(Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface, bool renderWithColor);
     void set(double eventX, double eventY, bool set);
 
 protected:
-    std::unique_ptr<std::vector<uint32_t>> getRowCount(uint32_t row);
+    std::unique_ptr<std::vector<int32_t>> getRowCount(int32_t row);
 
 private:
-    uint32_t m_width;
-    uint32_t m_height;
-    uint32_t m_scaleFactor{2};
-    uint32_t m_generation{};
+    int32_t m_width;
+    int32_t m_height;
+    int32_t m_scaleFactor{2};
+    int32_t m_generation{};
     double m_computeTime{};
     // the storage options are
     // --- enum based on uint8_t
