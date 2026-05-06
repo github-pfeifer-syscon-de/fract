@@ -119,7 +119,7 @@ protected:
 private:
     std::list<std::unique_ptr<Life105Segment>> m_lifeLines;
     std::pair<int32_t,int32_t> m_offs;
-
+    std::shared_ptr<LifeRule> m_rule;
 };
 
 class Life106LifeParser

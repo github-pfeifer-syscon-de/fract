@@ -43,21 +43,24 @@ LifeRule23::isAlive(bool life, int32_t neighbours)
 }
 
 DynamicLifeRule::DynamicLifeRule(const std::string& rule)
-: m_name{rule}
+: m_birth(10, false)
+, m_survival(10, false)
+, m_name{rule}
 {
     auto bpos = rule.find('b');
+    auto slpos = rule.find('/');
     if (bpos != rule.npos) {    // try "b3/s23" without presuming specific order
         ++bpos;
         auto end = rule.find('/', bpos);
         if (end == rule.npos) {
             end = rule.size();
         }
-        std::string born = rule.substr(bpos, end - bpos);
+        auto birth = rule.substr(bpos, end - bpos);
         try {
-            add(m_born, born);
+            add(m_birth, birth);
         }
         catch (std::invalid_argument& e) {
-            m_msg += Glib::ustring::sprintf("Rule not parsable born number %s\n", born);
+            m_msg += Glib::ustring::sprintf("Rule not parsable born number %s\n", birth);
         }
     }
     auto spos = rule.find('s');
@@ -67,44 +70,42 @@ DynamicLifeRule::DynamicLifeRule(const std::string& rule)
         if (end == rule.npos) {
             end = rule.size();
         }
-        std::string stay = rule.substr(spos, end - spos);
+        auto survival = rule.substr(spos, end - spos);
         try {
-            add(m_stay, stay);
+            add(m_survival, survival);
         }
         catch (std::invalid_argument& e) {
-            m_msg += Glib::ustring::sprintf("Rule not parsable stay number %s\n", stay);
+            m_msg += Glib::ustring::sprintf("Rule not parsable survival number %s\n", survival);
         }
     }
-    else {  // try "23/3"
-        auto slpos = rule.find('/');
-        if (slpos != rule.npos) {
-            std::string stay = rule.substr(0, slpos);
-            try {
-                add(m_stay, stay);
-            }
-            catch (std::invalid_argument& e) {
-                m_msg += Glib::ustring::sprintf("Rule not parsable stay number %s\n", stay);
-            }
-            std::string born = rule.substr(slpos + 1);
-            try {
-                add(m_born, born);
-            }
-            catch (std::invalid_argument& e) {
-                m_msg += Glib::ustring::sprintf("Rule not parsable born number %s\n", born);
-            }
+    else if (slpos != rule.npos) {   // try "23/3" as Survival/Birth, used by life 1.05,rle
+        auto survival = rule.substr(0, slpos);
+        try {
+            add(m_survival, survival);
         }
+        catch (std::invalid_argument& e) {
+            m_msg += Glib::ustring::sprintf("Rule not parsable survival number %s\n", survival);
+        }
+        auto birth = rule.substr(slpos + 1);
+        try {
+            add(m_birth, birth);
+        }
+        catch (std::invalid_argument& e) {
+            m_msg += Glib::ustring::sprintf("Rule not parsable birth number %s\n", birth);
+        }
+
     }
-    if (m_born.empty() || m_stay.empty()) {
-        m_msg += Glib::ustring::sprintf("Rule not implemented %s\n", rule);
+    if (m_birth.empty() || m_survival.empty()) {
+        m_msg += Glib::ustring::sprintf("Rule incomplete %s\n", rule);
     }
 }
 
 void
-DynamicLifeRule::add(std::unordered_set<int32_t>& set, const std::string& num)
+DynamicLifeRule::add(std::vector<bool>& set, const std::string& num)
 {
     for (std::string::size_type i = 0; i < num.length(); ++i) {
         auto n = std::stoi(num.substr(i, 1));
-        set.insert(n);
+        set[n] = true;
     }
 }
 
@@ -125,10 +126,10 @@ DynamicLifeRule::isAlive(bool life, int32_t neighbours)
 {
     bool nextLife;
     if (life) {
-        nextLife = m_stay.find(neighbours) != m_stay.end();
+        nextLife = m_survival[neighbours];
     }
     else {
-        nextLife = m_born.find(neighbours) != m_stay.end();
+        nextLife = m_birth[neighbours];
     }
     return nextLife;
 }

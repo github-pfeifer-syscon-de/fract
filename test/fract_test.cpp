@@ -23,6 +23,7 @@
 #include "fract_config.h"
 #include "LifeParser.hpp"
 #include "LifeGrid.hpp"
+#include <random>
 
 bool
 compare(const std::shared_ptr<LifeGrid>& primGrid
@@ -134,6 +135,7 @@ parse()
         return false;
     }
     const auto LIFE_ITER{173};
+    rleGrid->setRule(std::make_shared<DynamicLifeRule>("b3/s23"));  // also test rule parse,check
     for (int i = 0; i < LIFE_ITER; ++i) {
         rleGrid->nextGen();
     }
@@ -162,6 +164,7 @@ parse()
                   << "expected\n" << exp << std::endl;
         return false;
     }
+
     return true;
 }
 
@@ -175,5 +178,6 @@ main(int argc, char **argv)
     if (!parse()) {
         return 1;
     }
+
     return 0;
 }

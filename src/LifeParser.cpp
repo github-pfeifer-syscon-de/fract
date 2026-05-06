@@ -499,7 +499,18 @@ bool
 Life105LifeParser::parseLine(std::shared_ptr<LifeGrid>& lifeGrid, const std::string& line, Glib::ustring& msg)
 {
     const char commentChar = getCommentChar();
-    if (line.length() > 1 && line.substr(0,2) == "#P") {
+    if (line.length() > 3 && line.substr(0,2) == "#R") {    // #N will be ignored here, but will add in final
+        std::string rule = line.substr(2);
+        auto dynRule = std::make_shared<DynamicLifeRule>(rule);
+        auto ruleMsg = dynRule->getMessage();
+        if (ruleMsg.empty()) {
+            m_rule = dynRule;
+        }
+        else {
+            msg += ruleMsg+"\n";
+        }
+    }
+    else if (line.length() > 3 && line.substr(0,2) == "#P") {
         m_offs = parsePair(line.substr(2), msg);
     }
     else if (line[0] != commentChar) {
@@ -563,6 +574,10 @@ Life105LifeParser::parseLifeLines()
         }
         ++row;
     }
+    if (!m_rule) {
+        m_rule = std::make_shared<LifeRule23>();
+    }
+    lifeGrid->setRule(m_rule);
     return lifeGrid;
 }
 

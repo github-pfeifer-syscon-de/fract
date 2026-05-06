@@ -60,11 +60,11 @@ public:
     std::string getName() override;
     bool isAlive(bool life, int32_t neighbours) override;
 protected:
-    void add(std::unordered_set<int32_t>& set, const std::string& num);
+    void add(std::vector<bool>& set, const std::string& num);
 
 private:
-    std::unordered_set<int32_t> m_born;
-    std::unordered_set<int32_t> m_stay;
+    std::vector<bool> m_birth;  // this seems to be the fastest lookup
+    std::vector<bool> m_survival;
     std::string m_name;
     std::string m_msg;
 };
