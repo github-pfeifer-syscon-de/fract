@@ -15,6 +15,7 @@ Use the following commands to get the prerequisits (run with sudo or as root):
 <pre>
 apt-get install git build-essential meson
 apt-get install libgtkmm-3.0-dev
+apt-get install libsoup-3.0-dev
 </pre>
 
 The compile goes this way:
@@ -39,6 +40,7 @@ pacman -S base-devel
 pacman -S ${MINGW_PACKAGE_PREFIX}-gcc
 pacman -S ${MINGW_PACKAGE_PREFIX}-meson
 pacman -S ${MINGW_PACKAGE_PREFIX}-gtkmm3
+pacman -S ${MINGW_PACKAGE_PREFIX}-libsoup-3.0
 </pre>
 
 The compile goes this way:
@@ -56,4 +58,6 @@ The compile goes this way:
 
 ## Life
 
-Also available a "conways game of life" implementation. 
+Also available a "conways game of life" implementation.
+With the option to use .life (1.05,1.06),.cell and .rle formated links 
+from the web or paste cell patterns into the program.

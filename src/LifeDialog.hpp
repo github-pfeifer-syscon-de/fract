@@ -19,51 +19,18 @@
 #pragma once
 
 #include <gtkmm.h>
-#include <memory>
 
-
-class LifeGrid
-{
-public:
-    LifeGrid(int32_t width, int32_t height);
-    explicit LifeGrid(const LifeGrid& orig) = delete;
-    virtual ~LifeGrid() = default;
-
-    size_t getAllocation() const;
-    int32_t getWidth() const;
-    int32_t getHeight() const;
-    int32_t getScaleFactor() const;
-    int32_t getGeneration() const;
-    double getComputeTime() const;
-    void fill(bool state = false);
-    void fillRandom(int32_t randomness);
-    bool nextGen();
-    void update(Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface, bool renderWithColor);
-    void set(double eventX, double eventY, bool set);
-
-protected:
-    std::unique_ptr<std::vector<int32_t>> getRowCount(int32_t row);
-
-private:
-    int32_t m_width;
-    int32_t m_height;
-    int32_t m_scaleFactor{2};
-    int32_t m_generation{};
-    double m_computeTime{};
-    // the storage options are
-    // --- enum based on uint8_t
-    //  # enum with default, inefficent storage, but fast computation
-    //  # separate bool's compact storage, time ~ as above
-    std::unique_ptr<std::vector<bool>> m_grid;
-    std::unique_ptr<std::vector<bool>> m_changed;
-};
+#include "LifeGrid.hpp"
+#include "LifeQueryDialog.hpp"
 
 class LifeDialog
 : public Gtk::Dialog
+, public ResultCallback
 {
 public:
     LifeDialog(BaseObjectType* cobject
-            , const Glib::RefPtr<Gtk::Builder>& builder);
+            , const Glib::RefPtr<Gtk::Builder>& builder
+            , Gtk::Application *appl);
     explicit LifeDialog(const LifeDialog& orig) = delete;
     virtual ~LifeDialog() = default;
     void on_response(int response_id) override;
@@ -71,14 +38,23 @@ public:
     bool next();
     void random();
     void clear();
+    void open();
+    std::string getDefaultSrc() override;
+    void notify(const std::string& value) override;
+
     bool drawing_clicked(GdkEventButton* event);
     bool drawing_motion(GdkEventMotion* event);
     static void showDialog(Gtk::Application *appl);
+    // provide a example to find more ...
+    static constexpr auto EXAMPLE_ADDRESS{"https://www.conwaylife.com/patterns/10enginecordership.rle"};
 protected:
     void createGrid();
     bool drawArea(const Cairo::RefPtr<Cairo::Context>& cr);
+    void show_error(const Glib::ustring& msg, Gtk::MessageType type = Gtk::MessageType::MESSAGE_ERROR);
+    void adjustImageSize();
 
 private:
+    Gtk::Application *m_appl;
     Gtk::ScrolledWindow* m_scroll;
     Gtk::Grid* m_grid;
     Gtk::Button* m_apply;
@@ -91,6 +67,8 @@ private:
     Gtk::SpinButton* m_randomFactor;
     Gtk::Button* m_clear;
     Gtk::Label* m_generation;
+    Gtk::Label* m_rule;
+    Gtk::Button* m_open;
     Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface;
     std::shared_ptr<LifeGrid> m_lifeGrid;
     sigc::connection m_timer;

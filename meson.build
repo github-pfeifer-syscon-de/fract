@@ -26,22 +26,27 @@ foreach cflag : disable_flags
     endif
 endforeach
 
-subdir('src')
-subdir('res')
-sources += app_resources
-sources += win_res_file 
 gtkmm3_deps     = dependency('gtkmm-3.0')
 glibmm2_deps    = dependency('glibmm-2.4 giomm-2.4')
+libsoup3_deps    = dependency('libsoup-3.0')
 thread_deps     = dependency('threads')
 
 deps = [gtkmm3_deps
-    , glibmm2_deps
-    , thread_deps
-    ]
+        , glibmm2_deps
+        , libsoup3_deps
+        , thread_deps
+]
+
+subdir('src')
+subdir('test')
+subdir('res')
+sources += app_resources
+sources += win_res_file 
 
 project_targt = executable(meson.project_name()
     , sources, app_resources
     , dependencies: deps
     , install: true
+    , link_with: [life_lib]
     , win_subsystem: 'windows'  # disable this to see console output for windows
     )

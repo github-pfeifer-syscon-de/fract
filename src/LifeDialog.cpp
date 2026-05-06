@@ -17,209 +17,16 @@
  */
 
 #include <iostream>
-#include <random>
 
+#include "LifeParser.hpp"
 #include "LifeDialog.hpp"
-
-#include <ranges>
-
-LifeGrid::LifeGrid(int32_t width, int32_t height)
-: m_width{width}
-, m_height{height}
-{
-    m_grid = std::make_unique<std::vector<bool>>(getAllocation(), false);
-    m_changed = std::make_unique<std::vector<bool>>(getAllocation(), false);
-    m_scaleFactor = std::max(1, 512 / std::max(m_width, m_height));
-}
-
-size_t
-LifeGrid::getAllocation() const
-{
-    return m_width * m_height;
-}
-
-int32_t
-LifeGrid::getWidth() const
-{
-    return m_width;
-}
-
-int32_t
-LifeGrid::getHeight() const
-{
-    return m_height;
-}
-
-int32_t
-LifeGrid::getScaleFactor() const
-{
-    return m_scaleFactor;
-}
-
-int32_t
-LifeGrid::getGeneration() const
-{
-    return m_generation;
-}
-
-double
-LifeGrid::getComputeTime() const
-{
-    return  m_computeTime;
-}
-
-void
-LifeGrid::fill(bool state)
-{
-    std::fill(m_grid->begin(), m_grid->end(), state);
-    std::fill(m_changed->begin(), m_changed->end(), state);
-    m_generation = 0;
-}
-
-void
-LifeGrid::fillRandom(int32_t randomness)
-{
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    auto mid = randomness / 2u;
-    for (uint32_t i = 0; i < m_grid->size(); ++i) {
-        auto val = rng() % randomness;
-        (*m_grid)[i] = (val == mid);
-        (*m_changed)[i] = (val == mid);
-    }
-    m_generation = 0;
-}
-
-// remember sums avoid multiple index eval
-//   the calculation of prepared sums reduces times from ~3ms to ~2ms
-std::unique_ptr<std::vector<int32_t>>
-LifeGrid::getRowCount(int32_t row)
-{
-    auto rowCnt = std::make_unique<std::vector<int32_t>>(m_width);
-    const auto rowsOffs = row * m_width;
-    int32_t prevCellCnt = (*m_grid)[rowsOffs + (m_width - 1)] ? 1 : 0;
-    int32_t thisCellCnt = (*m_grid)[rowsOffs + 0] ? 1 : 0;
-    for (int32_t cell = 0; cell < m_width; ++cell) {
-        const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
-        int32_t nextCellCnt = (*m_grid)[rowsOffs + nextCell] ? 1 : 0;
-        (*rowCnt)[cell] = prevCellCnt + thisCellCnt + nextCellCnt;
-        prevCellCnt = thisCellCnt;
-        thisCellCnt = nextCellCnt;
-    }
-    return rowCnt;
-}
-
-bool
-LifeGrid::nextGen()
-{
-    const auto start{std::chrono::steady_clock::now()};
-    bool anySet{};
-    auto prevRowCnt = getRowCount(m_height - 1);   // wrap at edges
-    auto zeroRowCnt = getRowCount(0);   // since we are overwriting cells need stored instance
-    auto thisRowCnt = getRowCount(0);
-    for (int32_t row = 0; row < m_height; ++row) {
-        const auto rowsOffs = row * m_width;
-        std::unique_ptr<std::vector<int32_t>> nextRowCnt;
-        if (row < m_height - 1) {
-            nextRowCnt = getRowCount(row + 1);
-        }
-        else {
-            nextRowCnt = std::move(zeroRowCnt);
-        }
-        for (int32_t cell = 0; cell < m_width; ++cell) {
-            bool set;
-            auto cnt = (*prevRowCnt)[cell] + (*thisRowCnt)[cell] + (*nextRowCnt)[cell];
-            if ((*m_grid)[rowsOffs + cell]) {
-                set = cnt >= 3 && cnt <= 4;     // original values are 2,3 but here we sum the cell we are on as well
-                (*m_grid)[rowsOffs + cell] = set;
-                (*m_changed)[rowsOffs + cell] = !set;
-            }
-            else {
-                set = cnt == 3;
-                (*m_grid)[rowsOffs + cell] = set;
-                (*m_changed)[rowsOffs + cell] = set;
-            }
-            anySet |= set;
-        }
-        prevRowCnt = std::move(thisRowCnt);
-        thisRowCnt = std::move(nextRowCnt);
-    }
-    const auto end{std::chrono::steady_clock::now()};
-    auto duration = std::chrono::duration<double>(end - start);
-    //std::cout << "nextGen "  << duration.count() << "s" << std::endl;
-    ++m_generation;
-    m_computeTime = (m_computeTime * static_cast<double>(m_generation - 1) + duration.count()) / static_cast<double>(m_generation);
-
-    return anySet;
-}
-
-void
-LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface> imageSurface, bool renderWithColor)
-{
-    const auto start{std::chrono::steady_clock::now()};
-    //auto cr = Cairo::Context::create(imageSurface);
-    // pushing pixels is 10*faster than calling cairo
-    auto data = reinterpret_cast<uint32_t*>(imageSurface->get_data());
-    uint32_t rgb;
-    //double red;
-    //double green;
-    //double blue;
-    const auto rowStride = (imageSurface->get_stride() / sizeof(int32_t));
-    for (int32_t row = 0; row < m_height; ++row) {
-        const auto cellOffs = row * m_width;
-        for (int32_t cell = 0; cell < m_width; ++cell) {
-            auto cellVal = (*m_grid)[cellOffs + cell];
-            auto cellChanged = (*m_changed)[cellOffs + cell];
-            if (renderWithColor) {
-                //red = cellVal == LifeCell::On || cellVal == LifeCell::Vanished ? 1.0 : 0.0;
-                //green = cellVal == LifeCell::On || cellVal == LifeCell::Generated ? 1.0 : 0.0;
-                //blue = cellVal == LifeCell::On ? 1.0 : 0.0;
-                rgb = 0xff000000
-                    | (((cellVal && !cellChanged) || (!cellVal && cellChanged)) ? 0xff0000 : 0x0)
-                    | (cellVal ? 0x00ff00 : 0x0)
-                    | ((cellVal && !cellChanged) ? 0x0000ff : 0x0);
-            }
-            else {
-                rgb =  0xff000000
-                    | (cellVal ? 0xff0000 : 0x0)
-                    | (cellVal ? 0x00ff00 : 0x0)
-                    | (cellVal ? 0x0000ff : 0x0);
-            }
-            for (int32_t j = 0; j < m_scaleFactor; ++j) {
-                auto rowPixOffs = data + ((row * m_scaleFactor + j) * rowStride) + cell * m_scaleFactor;
-                for (int32_t i = 0; i < m_scaleFactor; ++i) {
-                    rowPixOffs[i] = rgb;
-                }
-            }
-            //cr->set_source_rgb(red, green, blue);
-            //cr->rectangle(row * m_scaleFactor, cell * m_scaleFactor, m_scaleFactor, m_scaleFactor);
-            //cr->fill();
-        }
-        imageSurface->mark_dirty(0, row, imageSurface->get_width(), m_scaleFactor);
-    }
-    const auto end{std::chrono::steady_clock::now()};
-    auto duration = std::chrono::duration<double>(end - start);
-    //std::cout << "update "  << duration.count() << "s" << std::endl;
-}
-
-void
-LifeGrid::set(double eventX, double eventY, bool set)
-{
-    auto ix = static_cast<int32_t>(eventX / static_cast<double>(m_scaleFactor));
-    auto iy = static_cast<int32_t>(eventY / static_cast<double>(m_scaleFactor));
-    if (ix >= 0 && ix < static_cast<int32_t>(m_width)
-     && iy >= 0 && iy < static_cast<int32_t>(m_height)) {
-        const auto rowsOffs = iy * m_width;
-        (*m_grid)[rowsOffs + ix] = set;
-        (*m_changed)[rowsOffs + ix] = true;
-        m_generation = 0;
-     }
-}
 
 
 LifeDialog::LifeDialog(BaseObjectType* cobject
-                    , const Glib::RefPtr<Gtk::Builder>& builder)
+                    , const Glib::RefPtr<Gtk::Builder>& builder
+                    , Gtk::Application *appl)
 : Gtk::Dialog(cobject)
+, m_appl{appl}
 {
     builder->get_widget("width", m_width);
     builder->get_widget("height", m_height);
@@ -233,6 +40,8 @@ LifeDialog::LifeDialog(BaseObjectType* cobject
     builder->get_widget("randomFactor", m_randomFactor);
     builder->get_widget("buttonClear", m_clear);
     builder->get_widget("generation", m_generation);
+    builder->get_widget("open", m_open);
+    builder->get_widget("rule",m_rule);
 
     m_apply->signal_clicked().connect(
         sigc::mem_fun(*this, &LifeDialog::apply));
@@ -240,6 +49,8 @@ LifeDialog::LifeDialog(BaseObjectType* cobject
         sigc::mem_fun(*this, &LifeDialog::random));
     m_clear->signal_clicked().connect(
         sigc::mem_fun(*this, &LifeDialog::clear));
+    m_open->signal_clicked().connect(
+        sigc::mem_fun(*this, &LifeDialog::open));
     m_drawing->signal_draw().connect(
         sigc::mem_fun(*this, &LifeDialog::drawArea));
     m_drawing->add_events(Gdk::EventMask::BUTTON_PRESS_MASK
@@ -353,6 +164,74 @@ LifeDialog::clear()
     m_drawing->queue_draw();
 }
 
+std::string
+LifeDialog::getDefaultSrc()
+{
+    return EXAMPLE_ADDRESS;
+}
+
+void
+LifeDialog::notify(const std::string& content)
+{
+    if (m_timer) {
+        m_timer.disconnect();   // stop update
+    }
+    createGrid();
+    auto parser = LifeParser::getParser(content);
+    if (!parser) {
+        show_error("Format not recognized", Gtk::MessageType::MESSAGE_ERROR);
+        return;
+    }
+    parser->setMinWidthHeight(
+              static_cast<int32_t>(m_width->get_adjustment()->get_lower())
+            , static_cast<int32_t>(m_height->get_adjustment()->get_lower()));
+    Glib::ustring msg;
+    m_lifeGrid = parser->parse(content, msg);
+    if (!m_lifeGrid) {
+        msg += "No result when parsing\n";
+    }
+    if (!msg.empty()) {
+        show_error(msg, Gtk::MessageType::MESSAGE_WARNING);
+    }
+    if (m_lifeGrid) {
+        m_rule->set_text(m_lifeGrid->getRule()->getName());
+        m_width->set_value(m_lifeGrid->getWidth());
+        m_height->set_value(m_lifeGrid->getHeight());
+        adjustImageSize();
+        m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
+        m_drawing->queue_draw();
+    }
+}
+
+void
+LifeDialog::show_error(const Glib::ustring& msg, Gtk::MessageType type)
+{
+    // this shoud automatically give some context
+    if (type == Gtk::MessageType::MESSAGE_ERROR) {
+        g_warning("show_error %s", msg.c_str());
+    }
+    Gtk::MessageDialog messagedialog(*this, msg, FALSE, type);
+    messagedialog.run();
+    messagedialog.hide();
+}
+
+void
+LifeDialog::open()
+{
+    LifeQueryDialog::showDialog(m_appl, this, m_lifeGrid);
+}
+
+void
+LifeDialog::adjustImageSize()
+{
+    auto scaleFactor = m_lifeGrid->getScaleFactor();
+    auto reqWidth{m_lifeGrid->getWidth() * scaleFactor};
+    auto reqHeight{m_lifeGrid->getHeight() * scaleFactor};
+    m_imageSurface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, reqWidth, reqHeight);
+    m_drawing->set_size_request(reqWidth, reqHeight);
+    set_size_request(reqWidth + 270, reqHeight + 60);   // scale dialog to view (found no working alternative)
+}
+
 void
 LifeDialog::createGrid()
 {
@@ -361,13 +240,8 @@ LifeDialog::createGrid()
     if (!m_lifeGrid
       || m_lifeGrid->getWidth() != width
       || m_lifeGrid->getHeight() != height) {
-        m_lifeGrid  = std::make_shared<LifeGrid>(width, height);
-        auto scaleFactor = m_lifeGrid->getScaleFactor();
-        auto reqWidth{static_cast<int>(width * scaleFactor)};
-        auto reqHeight{static_cast<int>(height * scaleFactor)};
-        m_imageSurface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, reqWidth, reqHeight);
-        m_drawing->set_size_request(reqWidth, reqHeight);
-        set_size_request(reqWidth + 250, reqHeight + 50);   // scale dialog to view
+        m_lifeGrid = std::make_shared<LifeGrid>(width, height);
+        adjustImageSize();
     }
 }
 
@@ -378,11 +252,11 @@ LifeDialog::showDialog(Gtk::Application *appl)
     try {
         refBuilder->add_from_resource(appl->get_resource_base_path() + "/life-dlg.ui");
         LifeDialog* lifeDialog{};
-        refBuilder->get_widget_derived("LifeDialog", lifeDialog);
+        refBuilder->get_widget_derived("LifeDialog", lifeDialog, appl);
         lifeDialog->run();
         delete lifeDialog;  // delete top level
     }
     catch (const Glib::Error& ex) {
-        std::cerr << "LifeDialog::show(): " << ex.what() << std::endl;
+        std::cerr << "LifeDialog::showDialog: " << ex.what() << std::endl;
     }
 }
