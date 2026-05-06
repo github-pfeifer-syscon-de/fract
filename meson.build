@@ -1,5 +1,5 @@
 project('fract', 'c', 'cpp'
-    , default_options: ['c_std=c11'
+    , default_options: ['c_std=c17'
                        , 'cpp_std=c++20'
                        , 'buildtype=release'
                        , 'warning_level=2']

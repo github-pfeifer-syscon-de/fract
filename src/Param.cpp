@@ -282,7 +282,7 @@ Param::map(gint32 d, double depth_step)
 guint32
 Param::map_rgb(guint32 d, long double re, long double im)
 {
-    if (d < 0 || d >= m_depth) // as we actual reach the depth handle these well
+    if (d >= m_depth) // as we actual reach the depth handle these well
         return 0xff000000u; // for black, opaque
     //double smoothed = log2(log2(re * re + im * im) / 2.0);  // log_2(log_2(|p|))
     //int colorI = (int)(sqrt(d + 10.0 - smoothed) * 256.0 ) % m_depth;

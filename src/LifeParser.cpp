@@ -354,13 +354,16 @@ RleLifeParser::parseFinal(std::shared_ptr<LifeGrid>& lifeGrid, Glib::ustring& ms
     auto width_offs = (width - m_width) / 2;
     auto height_offs = (height - m_height) / 2;
     int32_t row{height_offs};
-    auto grid = std::make_unique<std::vector<bool>>(width * height, false);
+    lifeGrid = std::make_shared<LifeGrid>(width, height);
+    auto& gridRef = lifeGrid->getGridRef();
+    auto& changedRef = lifeGrid->getChangedRef();
     for (auto& segm : m_segments) {
-        auto gridPos = grid->begin() + row * width + width_offs;
+        auto gridPos = gridRef.begin() + lifeGrid->getOffs(row, width_offs);
+        auto changedPos = changedRef.begin() + lifeGrid->getOffs(row, width_offs);
         std::copy(segm.begin(), segm.end(), gridPos);
+        std::copy(segm.begin(), segm.end(), changedPos);
         ++row;
     }
-    lifeGrid = std::make_shared<LifeGrid>(width, height, grid);
     if (m_rule) {
         lifeGrid->setRule(m_rule);
     }
@@ -393,14 +396,14 @@ RleLifeParser::exportGrid(const std::shared_ptr<LifeGrid>& lifeGrid)
     // the line size limit is not exactly followed
     std::string result;
     if (lifeGrid) {
-        result.reserve((lifeGrid->getWidth()) * lifeGrid->getHeight() / 2);
+        result.reserve(lifeGrid->getWidth() * lifeGrid->getHeight() / 2);
         result += Glib::ustring::sprintf("x = %d, y = %d, rule = %s\n", lifeGrid->getWidth(), lifeGrid->getHeight(), lifeGrid->getRule()->getName());
         auto start = result.size();
         auto grid = lifeGrid->getGrid();
         std::vector<bool> emptyLine(lifeGrid->getHeight(), false);
         for (int32_t row = 0; row < lifeGrid->getHeight(); ++row) {
-            auto colStart = grid.begin() + (row * lifeGrid->getWidth());
-            auto colEnd = grid.begin() + ((row + 1) * lifeGrid->getWidth());
+            auto colStart = grid.begin() + lifeGrid->getOffs(row, 0);
+            auto colEnd = grid.begin() + lifeGrid->getOffs(row + 1, 0);
             auto found = std::ranges::find(colStart, colEnd, true);
             emptyLine[row] = (found == colEnd);
         }
@@ -413,8 +416,8 @@ RleLifeParser::exportGrid(const std::shared_ptr<LifeGrid>& lifeGrid)
                 row += n - 1;   // -1 since the loop will increment as well
             }
             else {
-                auto colStart = grid.begin() + (row * lifeGrid->getWidth());
-                auto colEnd = grid.begin() + ((row + 1) * lifeGrid->getWidth());
+                auto colStart = grid.begin() + lifeGrid->getOffs(row, 0);
+                auto colEnd = grid.begin() + lifeGrid->getOffs(row + 1, 0);
                 while (colStart != colEnd) {
                     auto value = *colStart;
                     auto found = std::ranges::find(colStart, colEnd, !value);
@@ -597,9 +600,10 @@ Life105LifeParser::exportGrid(const std::shared_ptr<LifeGrid>& lifeGrid)
         result += getFormatIdentifier() + "\n";   // use the visually obvious life 1.05 as default
         auto grid = lifeGrid->getGrid();
         for (int32_t row = 0; row < lifeGrid->getHeight(); ++row) {
-            auto rowOffs = row * lifeGrid->getWidth();
+            auto rowOffs = lifeGrid->getOffs(row, 0);
             for (int32_t col = 0; col < lifeGrid->getWidth(); ++col) {
-                result += grid[rowOffs + col] ? getMarkChar() : '.';
+                result += grid[rowOffs] ? getMarkChar() : '.';
+                ++rowOffs;
             }
             result += '\n';
         }

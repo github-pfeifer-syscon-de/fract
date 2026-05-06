@@ -74,7 +74,6 @@ class LifeGrid
 {
 public:
     LifeGrid(int32_t width, int32_t height);
-    LifeGrid(int32_t width, int32_t height, std::unique_ptr<std::vector<bool>>& grid);
     explicit LifeGrid(const LifeGrid& orig) = delete;
     virtual ~LifeGrid() = default;
 
@@ -94,9 +93,19 @@ public:
     void setRule(const std::shared_ptr<LifeRule>& rule);
     std::vector<bool> getGrid() const
     {
-        return std::vector<bool>(*m_grid.get());
+        return m_grid;
     }
-
+    std::vector<bool>& getGridRef()
+    {
+        return m_grid;
+    }
+    std::vector<bool>& getChangedRef()
+    {
+        return m_changed;
+    }
+    inline size_t getOffs(int32_t row, int32_t col) {
+        return static_cast<size_t>(row * m_width + col);
+    }
 protected:
     std::unique_ptr<std::vector<int32_t>> getRowCount(int32_t row);
     void allocate();
@@ -112,7 +121,7 @@ protected:
     // --- enum based on uint8_t
     //  # enum with default, inefficent storage, but fast computation
     //  # separate bool's compact storage, time ~ as above
-    std::unique_ptr<std::vector<bool>> m_grid;
-    std::unique_ptr<std::vector<bool>> m_changed;
+    std::vector<bool> m_grid;
+    std::vector<bool> m_changed;
     std::shared_ptr<LifeRule> m_rule;
 };

@@ -60,7 +60,7 @@ DynamicLifeRule::DynamicLifeRule(const std::string& rule)
             add(m_birth, birth);
         }
         catch (std::invalid_argument& e) {
-            m_msg += Glib::ustring::sprintf("Rule not parsable born number %s\n", birth);
+            m_msg += Glib::ustring::sprintf("Rule not parsable birth number %s\n", birth);
         }
     }
     auto spos = rule.find('s');
@@ -138,28 +138,16 @@ DynamicLifeRule::isAlive(bool life, int32_t neighbours)
 LifeGrid::LifeGrid(int32_t width, int32_t height)
 : m_width{width}
 , m_height{height}
+, m_grid(width * height, false)
+, m_changed(width * height, false)
 , m_rule{std::make_shared<LifeRule23>()}
 {
     allocate();
 }
-
-LifeGrid::LifeGrid(int32_t width, int32_t height, std::unique_ptr<std::vector<bool>>& grid)
-: m_width{width}
-, m_height{height}
-, m_rule{std::make_shared<LifeRule23>()}
-{
-    m_grid = std::move(grid);
-    allocate();
-}
-
 
 void
 LifeGrid::allocate()
 {
-    if (!m_grid) {
-        m_grid = std::make_unique<std::vector<bool>>(getAllocation(), false);
-    }
-    m_changed = std::make_unique<std::vector<bool>>(getAllocation(), false);
     m_scaleFactor = std::max(1, 512 / std::max(m_width, m_height));
 }
 
@@ -202,8 +190,8 @@ LifeGrid::getComputeTime() const
 void
 LifeGrid::fill(bool state)
 {
-    std::fill(m_grid->begin(), m_grid->end(), state);
-    std::fill(m_changed->begin(), m_changed->end(), state);
+    std::fill(m_grid.begin(), m_grid.end(), state);
+    std::fill(m_changed.begin(), m_changed.end(), state);
     m_generation = 0;
 }
 
@@ -213,10 +201,10 @@ LifeGrid::fillRandom(int32_t randomness)
     std::random_device dev;
     std::mt19937 rng(dev());
     auto mid = randomness / 2u;
-    for (uint32_t i = 0; i < m_grid->size(); ++i) {
+    for (uint32_t i = 0; i < m_grid.size(); ++i) {
         auto val = rng() % randomness;
-        (*m_grid)[i] = (val == mid);
-        (*m_changed)[i] = (val == mid);
+        m_grid[i] = (val == mid);
+        m_changed[i] = (val == mid);
     }
     m_generation = 0;
 }
@@ -227,12 +215,12 @@ std::unique_ptr<std::vector<int32_t>>
 LifeGrid::getRowCount(int32_t row)
 {
     auto rowCnt = std::make_unique<std::vector<int32_t>>(m_width);
-    const auto rowsOffs = row * m_width;
-    int32_t prevCellCnt = (*m_grid)[rowsOffs + (m_width - 1)] ? 1 : 0;
-    int32_t thisCellCnt = (*m_grid)[rowsOffs + 0] ? 1 : 0;
+    const auto rowsOffs = getOffs(row, 0);
+    int32_t prevCellCnt = m_grid[rowsOffs + (m_width - 1)] ? 1 : 0;
+    int32_t thisCellCnt = m_grid[rowsOffs + 0] ? 1 : 0;
     for (int32_t cell = 0; cell < m_width; ++cell) {
         const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
-        int32_t nextCellCnt = (*m_grid)[rowsOffs + nextCell] ? 1 : 0;
+        int32_t nextCellCnt = m_grid[rowsOffs + nextCell] ? 1 : 0;
         (*rowCnt)[cell] = prevCellCnt + thisCellCnt + nextCellCnt;
         prevCellCnt = thisCellCnt;
         thisCellCnt = nextCellCnt;
@@ -249,7 +237,7 @@ LifeGrid::nextGen()
     auto zeroRowCnt = getRowCount(0);   // since we are overwriting cells need stored instance
     auto thisRowCnt = getRowCount(0);
     for (int32_t row = 0; row < m_height; ++row) {
-        const auto rowsOffs = row * m_width;
+        const auto rowsOffs = getOffs(row, 0);
         std::unique_ptr<std::vector<int32_t>> nextRowCnt;
         if (row < m_height - 1) {
             nextRowCnt = getRowCount(row + 1);
@@ -259,18 +247,17 @@ LifeGrid::nextGen()
         }
         for (int32_t cell = 0; cell < m_width; ++cell) {
             auto cnt = (*prevRowCnt)[cell] + (*thisRowCnt)[cell] + (*nextRowCnt)[cell];
-            auto alive =(*m_grid)[rowsOffs + cell];
+            auto alive = m_grid[rowsOffs + cell];
             if (alive) {
-                --cnt;  // original values are 2,3 but here we counted the cell we are on as well
+                --cnt;  // here we count the cell we are on as well
             }
             bool set = m_rule->isAlive(alive, cnt);
-            if (alive) {
-                (*m_grid)[rowsOffs + cell] = set;
-                (*m_changed)[rowsOffs + cell] = !set;
+            if (alive != set) {
+                m_grid[rowsOffs + cell] = set;
+                m_changed[rowsOffs + cell] = true;
             }
             else {
-                (*m_grid)[rowsOffs + cell] = set;
-                (*m_changed)[rowsOffs + cell] = set;
+                m_changed[rowsOffs + cell] = false;
             }
             anySet |= set;
         }
@@ -299,10 +286,10 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface>& imageSurface, bool renderWi
     //double blue;
     const auto rowStride = (imageSurface->get_stride() / sizeof(int32_t));
     for (int32_t row = 0; row < m_height; ++row) {
-        const auto cellOffs = row * m_width;
+        const auto cellOffs = getOffs(row, 0);
         for (int32_t cell = 0; cell < m_width; ++cell) {
-            auto cellVal = (*m_grid)[cellOffs + cell];
-            auto cellChanged = (*m_changed)[cellOffs + cell];
+            auto cellVal = m_grid[cellOffs + cell];
+            auto cellChanged = m_changed[cellOffs + cell];
             if (renderWithColor) {
                 //red = cellVal == LifeCell::On || cellVal == LifeCell::Vanished ? 1.0 : 0.0;
                 //green = cellVal == LifeCell::On || cellVal == LifeCell::Generated ? 1.0 : 0.0;
@@ -342,9 +329,9 @@ LifeGrid::set(double eventX, double eventY, bool set)
     auto iy = static_cast<int32_t>(eventY / static_cast<double>(m_scaleFactor));
     if (ix >= 0 && ix < static_cast<int32_t>(m_width)
      && iy >= 0 && iy < static_cast<int32_t>(m_height)) {
-        const auto rowsOffs = iy * m_width  + ix;
-        (*m_grid)[rowsOffs] = set;
-        (*m_changed)[rowsOffs] = true;
+        const auto rowsOffs = getOffs(iy, ix);
+        m_grid[rowsOffs] = set;
+        m_changed[rowsOffs] = true;
         m_generation = 0;
      }
 }
@@ -352,11 +339,11 @@ LifeGrid::set(double eventX, double eventY, bool set)
 void
 LifeGrid::setCell(int32_t col, int32_t row, int32_t n, bool value)
 {
-    auto i = row * m_width + col;
+    auto i = getOffs(row, col);
     for ( ; n > 0; --n ) {
-        if (i < static_cast<int32_t>(m_grid->size())) {
-            (*m_grid)[i] = value;
-            (*m_changed)[i] = true;
+        if (i < m_grid.size()) {
+            m_grid[i] = value;
+            m_changed[i] = true;
         }
         else {
             std::cout <<  "LifeGrid::setCell index overrun " << i << " col" << col << " row " << row << std::endl;
