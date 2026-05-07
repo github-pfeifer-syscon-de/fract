@@ -165,6 +165,18 @@ parse()
         return false;
     }
 
+    //
+    // bool arr[3][3];
+    // auto sarr = std::make_unique<bool[][3]>(3);
+    // for (size_t i = 0; i < 3; i++) {
+    //     std::cout << i << ":";
+    //     auto& row = sarr[i];
+    //     for (size_t j = 0; j < 3; j++) {
+    //         std::cout << " " << std::boolalpha << row[j];
+    //     }
+    //     std::cout << std::endl;
+    // }
+
     return true;
 }
 

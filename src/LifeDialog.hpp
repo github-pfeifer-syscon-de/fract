@@ -52,6 +52,7 @@ protected:
     bool drawArea(const Cairo::RefPtr<Cairo::Context>& cr);
     void show_error(const Glib::ustring& msg, Gtk::MessageType type = Gtk::MessageType::MESSAGE_ERROR);
     void adjustImageSize();
+    void updateMouse(double mx, double my, guint button);
 
 private:
     Gtk::Application *m_appl;
@@ -67,7 +68,7 @@ private:
     Gtk::SpinButton* m_randomFactor;
     Gtk::Button* m_clear;
     Gtk::Label* m_generation;
-    Gtk::Label* m_rule;
+    Gtk::Entry* m_rule;
     Gtk::Button* m_open;
     Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface;
     std::shared_ptr<LifeGrid> m_lifeGrid;

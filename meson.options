@@ -1,0 +1,2 @@
+option('tune', type : 'string', value : ''
+        , description : 'Preferred tune+architecture option e.g. use "native" for local system (may not run on different cpus)')

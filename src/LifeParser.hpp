@@ -49,6 +49,13 @@ public:
     virtual std::string exportGrid(const std::shared_ptr<LifeGrid>& lifeGrid);
 
     static std::unique_ptr<LifeParser> getParser(const std::string& content);
+    static std::string toLower(const std::string& in);
+    static std::string reduce(const std::string& str,
+           const std::string& fill = " ",
+           const std::string& whitespace = " \t");
+    static std::string trim(const std::string& str,
+         const std::string& whitespace = " \t\n");
+
 protected:
     std::pair<int32_t,int32_t> parsePair(const std::string& in, Glib::ustring& msg);
     int32_t m_minWidth{};

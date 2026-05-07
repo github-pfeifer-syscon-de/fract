@@ -86,7 +86,6 @@ public:
     void fillRandom(int32_t randomness);
     bool nextGen();
     void update(Cairo::RefPtr<Cairo::ImageSurface>& m_imageSurface, bool renderWithColor);
-    void set(double eventX, double eventY, bool set);
     void setCell(int32_t col, int32_t row, int32_t n, bool value);
 
     std::shared_ptr<LifeRule> getRule() const;
@@ -125,3 +124,4 @@ protected:
     std::vector<bool> m_changed;
     std::shared_ptr<LifeRule> m_rule;
 };
+

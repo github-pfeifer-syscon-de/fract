@@ -15,12 +15,17 @@ conf.set_quoted('FRACT_VERSION', meson.project_version())     # Surround the ver
 configure_file(output : meson.project_name() + '_config.h'
     , configuration : conf)
 
-disable_flags = [
+compile_flags = [
      '-Wno-unused-parameter'    # limit the compiler noisiness
     ,'-Wno-overlength-strings'  # this matters only if you are pedantic
 ]
+if get_option('tune') != ''
+compile_flags += [
+     '-mtune='+ get_option('tune')
+    ,'-march='+ get_option('tune')]
+endif
 cc = meson.get_compiler('c')
-foreach cflag : disable_flags
+foreach cflag : compile_flags
     if cc.has_argument(cflag)
         add_project_arguments(cflag, language: ['c', 'cpp'])
     endif

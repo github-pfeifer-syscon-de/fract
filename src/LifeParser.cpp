@@ -23,10 +23,9 @@
 #include "LifeParser.hpp"
 
 // suggested by https://stackoverflow.com/questions/1798112/removing-leading-and-trailing-spaces-from-a-string
-static
 std::string
-trim(const std::string& str,
-     const std::string& whitespace = " \t\n")
+LifeParser::trim(const std::string& str,
+     const std::string& whitespace)
 {
     const auto strBegin = str.find_first_not_of(whitespace);
     if (strBegin == std::string::npos)
@@ -38,11 +37,10 @@ trim(const std::string& str,
     return str.substr(strBegin, strRange);
 }
 
-static
 std::string
-reduce(const std::string& str,
-       const std::string& fill = " ",
-       const std::string& whitespace = " \t")
+LifeParser::reduce(const std::string& str
+       , const std::string& fill
+       , const std::string& whitespace)
 {
     // trim first
     auto result = trim(str, whitespace);
@@ -62,8 +60,8 @@ reduce(const std::string& str,
     return result;
 }
 
-static std::string
-toLower(const std::string in)
+std::string
+LifeParser::toLower(const std::string& in)
 {
     std::string out(in.size(), ' ');
     std::ranges::transform(in, out.begin(), ::tolower);
@@ -324,7 +322,19 @@ RleLifeParser::reset()
 bool
 RleLifeParser::parseLine(std::shared_ptr<LifeGrid>& lifeGrid, const std::string& line, Glib::ustring& msg)
 {
-    if (line[0] != '#') {
+    if (line.length() >= 2
+     && line.substr(0,2) == "#r") { // alternate rule spec
+        auto value = line.substr(2);
+        auto dynRule = std::make_shared<DynamicLifeRule>(value);
+        auto ruleMsg = dynRule->getMessage();
+        if (!ruleMsg.empty()) {
+            msg += ruleMsg + "\n";
+        }
+        else {
+            m_rule = dynRule;
+        }
+    }
+    else if (line[0] != '#') {
         auto comPos = line.find(',');
         if (comPos != line.npos) {
             parseAttributes(line, msg);
@@ -332,7 +342,7 @@ RleLifeParser::parseLine(std::shared_ptr<LifeGrid>& lifeGrid, const std::string&
         else if (line.find(RLE_MARK_CHAR) != line.npos
               ||line.find(RLE_BLANK_CHAR) != line.npos) {
             if (m_width == 0 || m_height == 0) {
-                msg += "Attributes not recognized within file.\n";
+                msg += "No attributes recognized within file.\n";
                 return false;
             }
             auto rleLine = line;

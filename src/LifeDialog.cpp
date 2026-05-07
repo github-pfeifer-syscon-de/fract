@@ -73,16 +73,27 @@ LifeDialog::on_response(int response_id)
     Gtk::Dialog::on_response(response_id);
 }
 
+void
+LifeDialog::updateMouse(double mx, double my, guint button)
+{
+    createGrid();
+    auto ix = static_cast<int32_t>(mx / static_cast<double>(m_lifeGrid->getScaleFactor()));
+    auto iy = static_cast<int32_t>(my / static_cast<double>(m_lifeGrid->getScaleFactor()));
+    if (ix >= 0 && ix < m_lifeGrid->getWidth()
+     && iy >= 0 && iy < m_lifeGrid->getHeight()) {
+        m_lifeGrid->setCell(ix, iy, 1, button == GDK_BUTTON_PRIMARY);
+        m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
+        m_drawing->queue_draw();
+    }
+}
+
 bool
 LifeDialog::drawing_clicked(GdkEventButton* event)
 {
     //std::cout << "x " << event->x << " y " << event->y << " btn " << event->button << std::endl;
     m_mouseButton = event->button;
     if (m_mouseButton != 0) {
-        createGrid();
-        m_lifeGrid->set(event->x, event->y, event->button == GDK_BUTTON_PRIMARY);
-        m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
-        m_drawing->queue_draw();
+        updateMouse(event->x, event->y, m_mouseButton);
     }
     return true;    // event handled
 }
@@ -91,10 +102,7 @@ bool
 LifeDialog::drawing_motion(GdkEventMotion* event)
 {
     if (m_mouseButton != 0) {
-        createGrid();
-        m_lifeGrid->set(event->x, event->y, m_mouseButton  == GDK_BUTTON_PRIMARY);
-        m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
-        m_drawing->queue_draw();
+        updateMouse(event->x, event->y, m_mouseButton);
     }
     return true;    // event handled
 }
@@ -108,6 +116,18 @@ LifeDialog::apply()
         return;
     }
     createGrid();
+    auto ruleName = m_rule->get_text();
+    auto gridRule = m_lifeGrid->getRule();
+    if (!ruleName.empty()
+     && ruleName != gridRule->getName()) {
+        auto dynRule = std::make_shared<DynamicLifeRule>(ruleName);
+        auto ruleMsg = dynRule->getMessage();
+        if (!ruleMsg.empty()) {
+            show_error(ruleMsg);
+            return;
+        }
+        m_lifeGrid->setRule(dynRule);
+    }
     int32_t delay = m_delay->get_value_as_int();
     m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &LifeDialog::next), delay);
     //m_apply->set_label("Stop");
