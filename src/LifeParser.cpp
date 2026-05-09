@@ -227,7 +227,7 @@ RleLifeParser::parseAttributes(const std::string& line, Glib::ustring& msg)
         last = comPos + 1;
     } while (last <  line.size());
     if (!m_rule) {
-        m_rule = std::make_shared<LifeRule23>();
+        m_rule = std::make_shared<LifeRuleB3_S23>();
         msg += Glib::ustring::sprintf("Using default rule\n");
     }
 }
@@ -588,7 +588,7 @@ Life105LifeParser::parseLifeLines()
         ++row;
     }
     if (!m_rule) {
-        m_rule = std::make_shared<LifeRule23>();
+        m_rule = std::make_shared<LifeRuleB3_S23>();
     }
     lifeGrid->setRule(m_rule);
     return lifeGrid;

@@ -42,6 +42,7 @@ LifeDialog::LifeDialog(BaseObjectType* cobject
     builder->get_widget("generation", m_generation);
     builder->get_widget("open", m_open);
     builder->get_widget("rule",m_rule);
+    builder->get_widget("scale",m_scale);
 
     m_apply->signal_clicked().connect(
         sigc::mem_fun(*this, &LifeDialog::apply));
@@ -53,6 +54,8 @@ LifeDialog::LifeDialog(BaseObjectType* cobject
         sigc::mem_fun(*this, &LifeDialog::open));
     m_drawing->signal_draw().connect(
         sigc::mem_fun(*this, &LifeDialog::drawArea));
+    m_scale->signal_value_changed().connect(
+               sigc::mem_fun(*this, &LifeDialog::scaleUpdated));
     m_drawing->add_events(Gdk::EventMask::BUTTON_PRESS_MASK
                         | Gdk::EventMask::BUTTON_RELEASE_MASK
                         | Gdk::EventMask::BUTTON_MOTION_MASK);
@@ -77,13 +80,48 @@ void
 LifeDialog::updateMouse(double mx, double my, guint button)
 {
     createGrid();
-    auto ix = static_cast<int32_t>(mx / static_cast<double>(m_lifeGrid->getScaleFactor()));
-    auto iy = static_cast<int32_t>(my / static_cast<double>(m_lifeGrid->getScaleFactor()));
+    auto ix = static_cast<int32_t>(mx / m_scaleFactor);
+    auto iy = static_cast<int32_t>(my / m_scaleFactor);
     if (ix >= 0 && ix < m_lifeGrid->getWidth()
      && iy >= 0 && iy < m_lifeGrid->getHeight()) {
         m_lifeGrid->setCell(ix, iy, 1, button == GDK_BUTTON_PRIMARY);
         m_lifeGrid->update(m_imageSurface, m_colorRender->get_active());
         m_drawing->queue_draw();
+    }
+}
+
+// as scaling to fractional
+double
+LifeDialog::snapScaleToFull(double scaleValue)
+{
+    if (scaleValue < 0.33333333333333) { // snap at fixed intervals
+        scaleValue = 0.25;
+    }
+    else if (scaleValue < 0.5) {
+        scaleValue = 0.33333333333333;
+    }
+    else if (scaleValue < 1.0) {
+        scaleValue = 0.5;
+    }
+    else {
+        scaleValue = std::floor(scaleValue);
+    }
+    return scaleValue;
+}
+
+void
+LifeDialog::scaleUpdated()
+{
+    if (!m_scaleUpdatesDisabled && m_lifeGrid) {
+        auto scaleValue = snapScaleToFull(m_scale->get_value());
+        if (m_scaleFactor != scaleValue) {
+            m_scaleFactor = scaleValue;
+            auto gridWidth = m_lifeGrid->getWidth();
+            auto gridHeight = m_lifeGrid->getHeight();
+            auto reqWidth{gridWidth * m_scaleFactor};
+            auto reqHeight{gridHeight * m_scaleFactor};
+            m_drawing->set_size_request(reqWidth, reqHeight);
+        }
     }
 }
 
@@ -118,15 +156,20 @@ LifeDialog::apply()
     createGrid();
     auto ruleName = m_rule->get_text();
     auto gridRule = m_lifeGrid->getRule();
-    if (!ruleName.empty()
-     && ruleName != gridRule->getName()) {
-        auto dynRule = std::make_shared<DynamicLifeRule>(ruleName);
-        auto ruleMsg = dynRule->getMessage();
-        if (!ruleMsg.empty()) {
-            show_error(ruleMsg);
-            return;
+    if (ruleName != gridRule->getName()) {
+        if (ruleName.empty()) {
+            m_lifeGrid->setRule(std::make_shared<LifeRuleB3_S23>());
+            m_rule->set_text( m_lifeGrid->getRule()->getName());
         }
-        m_lifeGrid->setRule(dynRule);
+        else {
+            auto dynRule = std::make_shared<DynamicLifeRule>(ruleName);
+            auto ruleMsg = dynRule->getMessage();
+            if (!ruleMsg.empty()) {
+                show_error(ruleMsg,  Gtk::MessageType::MESSAGE_WARNING);
+                return;
+            }
+            m_lifeGrid->setRule(dynRule);
+        }
     }
     int32_t delay = m_delay->get_value_as_int();
     m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &LifeDialog::next), delay);
@@ -138,8 +181,18 @@ LifeDialog::drawArea(const Cairo::RefPtr<Cairo::Context>& cr)
 {
     Gtk::Allocation allocation = get_allocation();
     if (m_imageSurface) {
-        cr->set_source(m_imageSurface, 0.0, 0.0);
+        cr->save();
+        cr->set_antialias(Cairo::Antialias::ANTIALIAS_GRAY);
+        cr->scale(m_scaleFactor, m_scaleFactor);
+        // this will be blurry
+        //cr->set_source(m_imageSurface, 0.0, 0.0);
+        auto pattern = Cairo::SurfacePattern::create(m_imageSurface);
+        pattern->set_filter(m_scaleFactor >= 1.0
+                            ? Cairo::FILTER_NEAREST
+                            : Cairo::FILTER_GOOD);
+        cr->set_source(pattern);
         cr->paint();
+        cr->restore();
     }
     else {
         cr->set_source_rgb(0.0, 0.0, 0.0);
@@ -203,8 +256,8 @@ LifeDialog::notify(const std::string& content)
         return;
     }
     parser->setMinWidthHeight(
-              static_cast<int32_t>(m_width->get_adjustment()->get_lower())
-            , static_cast<int32_t>(m_height->get_adjustment()->get_lower()));
+              static_cast<int32_t>(m_width->get_value())        // adjustment()->get_lower()
+            , static_cast<int32_t>(m_height->get_value())); // get_adjustment()->get_lower()
     Glib::ustring msg;
     m_lifeGrid = parser->parse(content, msg);
     if (!m_lifeGrid) {
@@ -244,12 +297,28 @@ LifeDialog::open()
 void
 LifeDialog::adjustImageSize()
 {
-    auto scaleFactor = m_lifeGrid->getScaleFactor();
-    auto reqWidth{m_lifeGrid->getWidth() * scaleFactor};
-    auto reqHeight{m_lifeGrid->getHeight() * scaleFactor};
-    m_imageSurface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, reqWidth, reqHeight);
+    auto gridWidth=  m_lifeGrid->getWidth();
+    auto gridHeight = m_lifeGrid->getHeight();
+    m_imageSurface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, gridWidth, gridHeight);
+    auto upscaleFactor = std::max(1, 512 / std::max(gridWidth, gridHeight));
+    auto screenHeight = get_screen()->get_height();
+    auto screenWidth = get_screen()->get_width();
+    // downscale in integer steps
+    auto downscaleFactor = std::max(1, (std::max(gridWidth, gridHeight) / std::min(screenHeight * 3 / 4, screenWidth * 3 / 4)) + 1);
+    m_scaleFactor = downscaleFactor > 1
+                            ? 1.0 / static_cast<double>(downscaleFactor)    // scale by 0.5, 0.333, 0.25
+                            : upscaleFactor;
+    auto reqWidth{gridWidth * m_scaleFactor};
+    auto reqHeight{gridHeight * m_scaleFactor};
     m_drawing->set_size_request(reqWidth, reqHeight);
-    set_size_request(reqWidth + 270, reqHeight + 60);   // scale dialog to view (found no working alternative)
+    auto viewPort = m_drawing->get_parent();
+    auto scrollWin = viewPort->get_parent();
+    scrollWin->set_size_request(reqWidth, reqHeight);
+    check_resize();
+    m_scaleUpdatesDisabled = true;
+    m_scale->set_value(m_scaleFactor);
+    m_scaleUpdatesDisabled = false;
+    //set_size_request(reqWidth + 270, reqHeight + 60);   // scale dialog to view (found no working alternative)
 }
 
 void

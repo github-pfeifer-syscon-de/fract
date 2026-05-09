@@ -38,13 +38,13 @@ public:
 };
 
 // conways basic rule
-class LifeRule23
+class LifeRuleB3_S23
 : public LifeRule
 {
 public:
-    LifeRule23() = default;
-    explicit LifeRule23(const LifeRule23& orig) = delete;
-    virtual ~LifeRule23() = default;
+    LifeRuleB3_S23() = default;
+    explicit LifeRuleB3_S23(const LifeRuleB3_S23& orig) = delete;
+    virtual ~LifeRuleB3_S23() = default;
     std::string getName() override;
     bool isAlive(bool life, int32_t neighbours) override;
 };
@@ -79,7 +79,6 @@ public:
 
     int32_t getHeight() const;
     int32_t getWidth() const;
-    int32_t getScaleFactor() const;
     int32_t getGeneration() const;
     double getComputeTime() const;
     void fill(bool state = false);
@@ -107,13 +106,11 @@ public:
     }
 protected:
     std::unique_ptr<std::vector<int32_t>> getRowCount(int32_t row);
-    void allocate();
     size_t getAllocation() const;
 
     private:
     int32_t m_width;
     int32_t m_height;
-    int32_t m_scaleFactor{2};
     int32_t m_generation{};
     double m_computeTime{};
     // the storage options are

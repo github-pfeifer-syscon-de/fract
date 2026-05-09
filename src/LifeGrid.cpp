@@ -25,13 +25,13 @@
 
 
 std::string
-LifeRule23::getName()
+LifeRuleB3_S23::getName()
 {
     return "B3/S23";
 }
 
 bool
-LifeRule23::isAlive(bool life, int32_t neighbours)
+LifeRuleB3_S23::isAlive(bool life, int32_t neighbours)
 {
     bool nextLife;
     if (life) {
@@ -141,15 +141,8 @@ LifeGrid::LifeGrid(int32_t width, int32_t height)
 , m_height{height}
 , m_grid(getAllocation(), false)
 , m_changed(getAllocation(), false)
-, m_rule{std::make_shared<LifeRule23>()}
+, m_rule{std::make_shared<LifeRuleB3_S23>()}
 {
-    allocate();
-}
-
-void
-LifeGrid::allocate()
-{
-    m_scaleFactor = std::max(1, 512 / std::max(m_width, m_height));
 }
 
 size_t
@@ -170,11 +163,6 @@ LifeGrid::getHeight() const
     return m_height;
 }
 
-int32_t
-LifeGrid::getScaleFactor() const
-{
-    return m_scaleFactor;
-}
 
 int32_t
 LifeGrid::getGeneration() const
@@ -220,7 +208,8 @@ LifeGrid::getRowCount(int32_t row)
     const auto rowsOffs = getOffs(row, 0);
     int32_t prevCellCnt = m_grid[rowsOffs + (m_width - 1)] ? 1 : 0;
     int32_t thisCellCnt = m_grid[rowsOffs + 0] ? 1 : 0;
-    // since we use div. references this is not suited for algos
+    // -> the optimizer seems to cope better with this function than ranges generate
+    //        frame calculation ~0.3ms(range) vs.  ~0.15ms (this) optimized
     for (int32_t cell = 0; cell < m_width; ++cell) {
         const auto nextCell = cell < m_width - 1 ? cell + 1 : 0;
         int32_t nextCellCnt = m_grid[rowsOffs + nextCell] ? 1 : 0;
@@ -280,19 +269,16 @@ void
 LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface>& imageSurface, bool renderWithColor)
 {
     const auto start{std::chrono::steady_clock::now()};
-    //auto cr = Cairo::Context::create(imageSurface);
     // pushing pixels is 10*faster than calling cairo
     auto data = reinterpret_cast<uint32_t*>(imageSurface->get_data());
     uint32_t rgb;
-    //double red;
-    //double green;
-    //double blue;
-    const auto rowStride = (imageSurface->get_stride() / sizeof(int32_t));
+    const auto imageRowStride = (imageSurface->get_stride() / sizeof(int32_t));
+    const int scaleFactor{std::max(1, imageSurface->get_width() / m_width)};   // keep using a scaled Cairo::ImageSurface as an option
     for (int32_t row = 0; row < m_height; ++row) {
-        const auto cellOffs = getOffs(row, 0);
+        const auto rowOffs = getOffs(row, 0);
         for (int32_t cell = 0; cell < m_width; ++cell) {
-            auto cellVal = m_grid[cellOffs + cell];
-            auto cellChanged = m_changed[cellOffs + cell];
+            auto cellVal = m_grid[rowOffs + cell];
+            auto cellChanged = m_changed[rowOffs + cell];
             if (renderWithColor) {
                 //red = cellVal == LifeCell::On || cellVal == LifeCell::Vanished ? 1.0 : 0.0;
                 //green = cellVal == LifeCell::On || cellVal == LifeCell::Generated ? 1.0 : 0.0;
@@ -308,9 +294,9 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface>& imageSurface, bool renderWi
                     | (cellVal ? 0x00ff00 : 0x0)
                     | (cellVal ? 0x0000ff : 0x0);
             }
-            for (int32_t j = 0; j < m_scaleFactor; ++j) {
-                auto rowPixOffs = data + ((row * m_scaleFactor + j) * rowStride) + cell * m_scaleFactor;
-                for (int32_t i = 0; i < m_scaleFactor; ++i) {
+            for (int32_t j = 0; j < scaleFactor; ++j) {
+                auto rowPixOffs = data + ((row * scaleFactor + j) * imageRowStride) + cell * scaleFactor;
+                for (int32_t i = 0; i < scaleFactor; ++i) {
                     rowPixOffs[i] = rgb;
                 }
             }
@@ -318,7 +304,7 @@ LifeGrid::update(Cairo::RefPtr<Cairo::ImageSurface>& imageSurface, bool renderWi
             //cr->rectangle(row * m_scaleFactor, cell * m_scaleFactor, m_scaleFactor, m_scaleFactor);
             //cr->fill();
         }
-        imageSurface->mark_dirty(0, row, imageSurface->get_width(), m_scaleFactor);
+        imageSurface->mark_dirty(0, row, imageSurface->get_width(), scaleFactor);
     }
     const auto end{std::chrono::steady_clock::now()};
     auto duration = std::chrono::duration<double>(end - start);

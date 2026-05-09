@@ -53,6 +53,8 @@ protected:
     void show_error(const Glib::ustring& msg, Gtk::MessageType type = Gtk::MessageType::MESSAGE_ERROR);
     void adjustImageSize();
     void updateMouse(double mx, double my, guint button);
+    void scaleUpdated();
+    double snapScaleToFull(double value);
 
 private:
     Gtk::Application *m_appl;
@@ -70,10 +72,13 @@ private:
     Gtk::Label* m_generation;
     Gtk::Entry* m_rule;
     Gtk::Button* m_open;
+    Gtk::Scale* m_scale;
     Cairo::RefPtr<Cairo::ImageSurface> m_imageSurface;
     std::shared_ptr<LifeGrid> m_lifeGrid;
     sigc::connection m_timer;
     guint m_mouseButton{};
+    double m_scaleFactor{1.0};
+    bool m_scaleUpdatesDisabled{};
 };
 
 

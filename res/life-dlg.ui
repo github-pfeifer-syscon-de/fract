@@ -11,7 +11,7 @@
   </object>
   <object class="GtkAdjustment" id="adjHeight">
     <property name="lower">128</property>
-    <property name="upper">1024</property>
+    <property name="upper">2048</property>
     <property name="value">256</property>
     <property name="step-increment">8</property>
     <property name="page-increment">32</property>
@@ -23,9 +23,17 @@
     <property name="step-increment">1</property>
     <property name="page-increment">2</property>
   </object>
+  <object class="GtkAdjustment" id="adjScale">
+    <property name="lower">0.25</property>
+    <property name="upper">8</property>
+    <property name="value">1</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">2</property>
+    <property name="page-size">1</property>
+  </object>
   <object class="GtkAdjustment" id="adjWidth">
     <property name="lower">128</property>
-    <property name="upper">1024</property>
+    <property name="upper">2048</property>
     <property name="value">256</property>
     <property name="step-increment">8</property>
     <property name="page-increment">32</property>
@@ -160,7 +168,7 @@
               </packing>
             </child>
             <child>
-              <!-- n-columns=3 n-rows=7 -->
+              <!-- n-columns=3 n-rows=8 -->
               <object class="GtkGrid" id="grid">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
@@ -272,7 +280,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="xpad">10</property>
-                    <property name="label" translatable="yes">Delay</property>
+                    <property name="label" translatable="yes">Delay (ms)</property>
                     <property name="xalign">1</property>
                   </object>
                   <packing>
@@ -300,13 +308,25 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="xpad">10</property>
-                    <property name="label" translatable="yes">Rule (e.g. B3/S23 
-or nn/n as surv./birth)</property>
+                    <property name="label" translatable="yes">Rule</property>
                     <property name="xalign">1</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
                     <property name="top-attach">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="rule">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="tooltip-text" translatable="yes">(e.g. B3/S23 
+or e.g. 23/3 as surv./birth</property>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">5</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
@@ -317,24 +337,39 @@ or nn/n as surv./birth)</property>
                     <property name="xalign">1</property>
                   </object>
                   <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">7</property>
+                    <property name="width">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">10</property>
+                    <property name="label" translatable="yes">Scale</property>
+                    <property name="xalign">1</property>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="scale">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="adjustment">adjScale</property>
+                    <property name="show-fill-level">True</property>
+                    <property name="round-digits">2</property>
+                    <property name="draw-value">False</property>
+                    <property name="value-pos">left</property>
+                  </object>
+                  <packing>
                     <property name="left-attach">1</property>
                     <property name="top-attach">6</property>
                     <property name="width">2</property>
                   </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="rule">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">5</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
                 <child>
                   <placeholder/>
