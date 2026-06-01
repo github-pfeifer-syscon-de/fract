@@ -51,6 +51,34 @@ The compile goes this way:
    ./fract.exe
 </pre>
 
+
+#### VisualStudio(R)
+
+The following is experimental, but if you have some experience with VS you may get this to work :
+
+Download/build Gtk-3 release from  https://github.com/wingtk/gvsbuild/releases/
+Modify the env as suggested on the main page, but add:
+<pre>
+PKG_CONFIG_PATH = "C:\GTK_INSTALL\lib\pkgconfig"
+</pre>
+
+Get a recent Version >= 3.14 of python from python.org
+At least for me python was not added to path so modify your path:
+"C:\Users\USER\AppData\Local\Programs\Python\Python314\Scripts\"
+
+Open a command-line, install meson:
+<pre>
+pip install meson
+</pre>
+
+The additional dependencies will fail, e.g. libsoup either you may find some place to get a VS-Version, build it or:
+As it just allows a simplified download remove the dependency and, comment these function in LifeQueryDialog.
+
+Create a solution:
+<pre>
+meson setup buildVS -Dbackend=vs2022 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
+<pre>
+
 ## Usage
 
 - All options are shown in a context menu with the right mouse click
