@@ -52,9 +52,9 @@ The compile goes this way:
 </pre>
 
 
-#### VisualStudio(R)
+#### Visual-Studio&copy;
 
-The following is experimental, but if you have some experience with VS you may get this to work :
+The following is experimental, it's doable, but you have tweak some pieces, and some experience with VS you may get this to work :
 
 Download/build Gtk-3 release from ???
 
@@ -67,32 +67,26 @@ Modify the env as suggested on the main page, but add:
 set PKG_CONFIG_PATH=C:\GTK_INSTALL\lib\pkgconfig
 </pre>
 
-Get a recent Version >= 3.14 of python from python.org
-At least for me python was not added to path so modify your path:
-"C:\Users\USER\AppData\Local\Programs\Python\Python314\Scripts\"
+Get a recent Version >= 3.14 of python from python.org.
 
 Open a command-line, install meson:
 <pre>
 pip install meson
 </pre>
 
-Clone 
-<pre>
-https://github.com/nghttp2/nghttp2.git
-</pre>
-Run 
-<pre>
-cmake . --install-prefix=c:\gtk
-cmake --build .  --config=release
-cmake --install
-</pre>
+As the managment of the depencies is possible,
+if you have some experience with Opensource projects,
+but its a chain (libsoup needs libnghttp needs sqllite) that does not end quickly,
+so remove the libsoup dependency at least for a start, 
+comment the referenes in LifeQueryDialog.
 
-The additional dependencies will fail, e.g. https://github.com/wingtk/libsoup it or:
-As it just allows a simplified download remove the dependency and, comment these function in LifeQueryDialog.
+The meson script uses a library for the life-sources that will not work for
+Visual-Studio&copy; so include the sources directly, and comment the test directory 
+in meson.build.
 
 Create a solution:
 <pre>
-meson setup buildVS -Dbackend=vs2022 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
+meson setup buildVS -Dbackend=vs2026 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
 <pre>
 
 ## Usage
