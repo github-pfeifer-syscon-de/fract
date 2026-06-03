@@ -58,9 +58,9 @@ The following is experimental, it's doable, but you have tweak some pieces, and 
 
 Download/build Gtk-3 release from ???
 
+<pre>
  https://github.com/wingtk/gvsbuild/releases/
-
-https://gitlab.gnome.org/GNOME/libsoup
+</pre>
 
 Modify the env as suggested on the main page, but add:
 <pre>
@@ -74,11 +74,12 @@ Open a command-line, install meson:
 pip install meson
 </pre>
 
-As the managment of the depencies is possible,
-if you have some experience with Opensource projects,
-but its a chain (libsoup needs libnghttp needs sqllite) that does not end quickly,
-so remove the libsoup dependency at least for a start, 
-comment the referenes in LifeQueryDialog.
+The major obstacle are the dependcies that are not provided,
+in this case libsoup. If you are expirienced in getting 
+Opensource projects to work you may resolve the chain:
+libsoup needs libnghttp needs sqllite ...
+So at least for a start, remove the libsoup dependency, 
+comment the referenes in LifeQueryDialog makes a first try easy.
 
 The meson script uses a library for the life-sources that will not work for
 Visual-Studio&copy; so include the sources directly, and comment the test directory 
