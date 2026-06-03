@@ -87,7 +87,7 @@ in meson.build.
 Create a solution:
 <pre>
 meson setup buildVS -Dbackend=vs2026 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
-<pre>
+</pre>
 
 ## Usage
 
