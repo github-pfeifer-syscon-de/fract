@@ -17,6 +17,9 @@
 
 #include <gtkmm.h>
 #include <iostream>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "FractApp.h"
 
@@ -85,3 +88,12 @@ main(int argc, char** argv)
 
     return app.run();
 }
+
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPSTR lpCmdLine, int nCmdShow)
+{
+    return main(__argc, __argv);
+}
+#endif

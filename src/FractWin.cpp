@@ -16,7 +16,6 @@
  */
 
 #include <gtkmm.h>
-#include <dirent.h>
 #include <stdlib.h>
 
 

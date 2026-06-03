@@ -56,10 +56,15 @@ The compile goes this way:
 
 The following is experimental, but if you have some experience with VS you may get this to work :
 
-Download/build Gtk-3 release from  https://github.com/wingtk/gvsbuild/releases/
+Download/build Gtk-3 release from ???
+
+ https://github.com/wingtk/gvsbuild/releases/
+
+https://gitlab.gnome.org/GNOME/libsoup
+
 Modify the env as suggested on the main page, but add:
 <pre>
-PKG_CONFIG_PATH = "C:\GTK_INSTALL\lib\pkgconfig"
+set PKG_CONFIG_PATH=C:\GTK_INSTALL\lib\pkgconfig
 </pre>
 
 Get a recent Version >= 3.14 of python from python.org
@@ -71,7 +76,18 @@ Open a command-line, install meson:
 pip install meson
 </pre>
 
-The additional dependencies will fail, e.g. libsoup either you may find some place to get a VS-Version, build it or:
+Clone 
+<pre>
+https://github.com/nghttp2/nghttp2.git
+</pre>
+Run 
+<pre>
+cmake . --install-prefix=c:\gtk
+cmake --build .  --config=release
+cmake --install
+</pre>
+
+The additional dependencies will fail, e.g. https://github.com/wingtk/libsoup it or:
 As it just allows a simplified download remove the dependency and, comment these function in LifeQueryDialog.
 
 Create a solution:
