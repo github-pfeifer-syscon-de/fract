@@ -32,6 +32,17 @@ If you decide to keep it (run with sudo or as root):
    meson install
 </pre>
 
+## Usage
+
+- All options are shown in a context menu with the right mouse click
+- To zoom just press the left mouse button and drag a rectangle for the next view
+
+## Life
+
+Also available a "conways game of life" implementation.
+With the option to use .life (1.05,1.06),.cell and .rle formated links 
+from the web or paste cell patterns into the program.
+
 ### Windows
 
 Use msys2 choose a preferred flavor and stick to it (a bit more ist explained with genericImg):
@@ -54,9 +65,10 @@ The compile goes this way:
 
 #### Visual-Studio&copy;
 
-The following is experimental, it's doable, but you have tweak some pieces, and some experience with VS you may get this to work :
+There are two choices:
+1. Use a download:
 
-Download/build Gtk-3 release from ???
+Download Gtk-3 release from 
 
 <pre>
  https://github.com/wingtk/gvsbuild/releases/
@@ -74,12 +86,18 @@ Open a command-line, install meson:
 pip install meson
 </pre>
 
-The major obstacle are the dependcies that are not provided,
-in this case libsoup. If you are expirienced in getting 
-Opensource projects to work you may resolve the chain:
-libsoup needs libnghttp needs sqllite ...
-So at least for a start, remove the libsoup dependency, 
-comment the referenes in LifeQueryDialog makes a first try easy.
+For this choice, you have to remove the libsoup dependency in meson.build, 
+comment the referenes in LifeQueryDialog, the major function will still be available.
+
+2. Second choice build it:
+
+If you want the dependencies follow the "Build GTK" lead
+
+<pre>
+uv run gvsbuild build gtk3 gtkmm3 libsoup3
+</pre>
+
+The following will be true for both choices:
 
 The meson script uses a library for the life-sources that will not work for
 Visual-Studio&copy; so include the sources directly, and comment the test directory 
@@ -87,16 +105,6 @@ in meson.build.
 
 Create a solution:
 <pre>
-meson setup buildVS -Dbackend=vs2026 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
+meson setup buildVS -Dbackend=vs2022 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
 </pre>
 
-## Usage
-
-- All options are shown in a context menu with the right mouse click
-- To zoom just press the left mouse button and drag a rectangle for the next view
-
-## Life
-
-Also available a "conways game of life" implementation.
-With the option to use .life (1.05,1.06),.cell and .rle formated links 
-from the web or paste cell patterns into the program.
