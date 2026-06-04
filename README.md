@@ -65,6 +65,11 @@ The compile goes this way:
 
 #### Visual-Studio&copy;
 
+The tool that makes the following happen is:
+<pre>
+ https://github.com/wingtk/gvsbuild
+</pre>
+
 There are two choices:
 1. Use a download:
 
@@ -91,10 +96,22 @@ comment the referenes in LifeQueryDialog, the major function will still be avail
 
 2. Second choice build it:
 
-If you want the dependencies follow the "Build GTK" lead
+Bring some gigabytes of storage and hours of time.
+
+If you want the dependencies follow the "Build GTK" lead, then
 
 <pre>
-uv run gvsbuild build gtk3 gtkmm3 libsoup3
+uv run gvsbuild build gtk3 
+uv run gvsbuild build gtkmm3 
+</pre>
+
+- for libsoup3 the VisualC&copy; 2013 runtime is required download it from: 
+https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2013-vc-120
+and install it
+- for libsoup3 a py executable is expected so copy in python bin directory python.exe to py.exe
+
+<pre>
+uv run gvsbuild build libsoup3
 </pre>
 
 The following will be true for both choices:
@@ -108,3 +125,6 @@ Create a solution:
 meson setup buildVS -Dbackend=vs2022 -Dprefix=YOUR_PREFEED_PROGRAM_LOCATION
 </pre>
 
+If the build complains about the fontconfig include is missing, this is due to fact that the include directories
+are set for each package, but the common include is missing, edit the fract@exe.vcxproj
+in AdditionalIncludeDirectories add the common gvs include directory (the first listed in INCLUDE=).
