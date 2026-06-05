@@ -108,6 +108,7 @@ uv run gvsbuild build gtkmm3
 - for libsoup3 the VisualC&copy; 2013 runtime is required download it from: 
 https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2013-vc-120
 and install it
+- As you probably live in free country the following workaround might not be needed:
 - for libsoup3 a py executable is expected so copy in python bin directory python.exe to py.exe
 
 <pre>
